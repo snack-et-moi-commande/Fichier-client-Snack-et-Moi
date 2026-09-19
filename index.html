@@ -7,6 +7,7 @@
 <meta name="description" content="Prospection commerciale Snack &amp; Moi : carte des points de vente, fiches contact et comptes rendus de visite.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
   :root{
@@ -1232,6 +1233,31 @@ const db = getFirestore(fbApp);
     out.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
     return out;
   }
+  window.exportVisitsToExcel = function(){
+    var flat = allVisitsFlat();
+    if(!flat.length){ alert('Aucune visite à exporter pour le moment.'); return; }
+    var refToClient = {};
+    CLIENTS.forEach(function(c){ refToClient[c.r] = c; });
+    var rows = flat.map(function(v){
+      var c = refToClient[v.ref];
+      return {
+        'Date': v.date || '',
+        'Enseigne': v.clientName || (c ? c.n : ''),
+        'Ville': c ? c.c : '',
+        'Référence client': v.ref || '',
+        'Commercial': v.commercial || '',
+        'Commentaire': v.notes || '',
+        'Photo magasin': v.photoStore ? 'Oui' : '',
+        'Photo rayon': v.photoShelf ? 'Oui' : ''
+      };
+    });
+    var ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:12},{wch:30},{wch:18},{wch:14},{wch:14},{wch:50},{wch:12},{wch:12}];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Visites');
+    var today = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, 'visites-snack-et-moi-'+today+'.xlsx');
+  };
   function renderDashboard(){
     var el = document.getElementById('dash-scroll');
     var now = Date.now();
@@ -1258,6 +1284,7 @@ const db = getFirestore(fbApp);
       '<div class="stat-tile warn"><span class="val tabular">'+due+'</span><span class="lbl">À relancer (+'+DUE_DAYS+'j)</span></div>'+
       '<div class="stat-tile good"><span class="val tabular">'+visitsWeek+'</span><span class="lbl">Visites cette semaine</span></div>'+
     '</div>';
+    html += '<button type="button" class="btn block" style="margin-top:12px;" onclick="exportVisitsToExcel()">Exporter les visites en Excel ('+flat.length+')</button>';
 
     html += '<div><div class="section-head"><h2 class="section-title">Par commercial</h2></div>';
     if(commList.length){
