@@ -707,10 +707,12 @@ const db = getFirestore(fbApp);
       el.hidden = true;
     }
   }
+  var flushInFlightIds = {};
   function flushPendingQueue(){
     if(!fbReady || !pendingQueue.length) return;
-    var toFlush = pendingQueue.slice();
+    var toFlush = pendingQueue.filter(function(v){ return !flushInFlightIds[v.localId]; });
     toFlush.forEach(function(v){
+      flushInFlightIds[v.localId] = true;
       var payload = {
         ref: v.ref, clientName: v.clientName, commercial: v.commercial,
         date: v.date, notes: v.notes, createdAt: v.createdAt
@@ -718,11 +720,15 @@ const db = getFirestore(fbApp);
       if(v.photoStore) payload.photoStore = v.photoStore;
       if(v.photoShelf) payload.photoShelf = v.photoShelf;
       addDoc(collection(db, 'visites'), payload).then(function(){
+        delete flushInFlightIds[v.localId];
         pendingQueue = pendingQueue.filter(function(p){ return p.localId !== v.localId; });
         savePendingQueue();
         updateSyncBanner();
         refreshVisitsAndRender();
-      }).catch(function(){ /* keep in queue, will retry next flush */ });
+      }).catch(function(){
+        delete flushInFlightIds[v.localId];
+        /* keep in queue, will retry next flush */
+      });
     });
   }
 
