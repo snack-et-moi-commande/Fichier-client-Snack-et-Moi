@@ -345,8 +345,11 @@
     background:rgba(20,24,18,.6); color:#fff; font-size:10px; line-height:1; cursor:pointer;
   }
   .visit-photos{display:flex; gap:8px; margin-top:6px;}
-  .visit-photos a{display:block; width:52px; height:52px; border-radius:8px; overflow:hidden; border:1px solid var(--border);}
-  .visit-photos img{width:100%; height:100%; object-fit:cover; display:block;}
+  .visit-photos img{width:52px; height:52px; border-radius:8px; border:1px solid var(--border); object-fit:cover; display:block; cursor:pointer;}
+  .lightbox{position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:999; display:none; align-items:center; justify-content:center; padding:20px;}
+  .lightbox.open{display:flex;}
+  .lightbox img{max-width:100%; max-height:100%; border-radius:10px; display:block;}
+  .lightbox .lb-close{position:absolute; top:14px; right:16px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; border:none; font-size:20px; line-height:1; cursor:pointer;}
   hr.sep{border:none; border-top:1px solid var(--border-soft); margin:16px 0;}
   .form textarea{
     width:100%; border:1px solid var(--border); background:var(--surface-2); border-radius:9px; padding:9px 10px;
@@ -376,6 +379,11 @@
 </style>
 </head>
 <body>
+
+<div id="lightbox" class="lightbox" onclick="closeLightbox()">
+  <button type="button" class="lb-close" onclick="closeLightbox(event)">&times;</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
 
 <div id="app">
   <header class="topbar">
@@ -764,6 +772,23 @@ const db = getFirestore(fbApp);
       refreshVisitsAndRender();
     }
   }
+
+  /* ============================= LIGHTBOX PHOTO ============================= */
+  // Affiche une photo en grand dans une superposition plutôt que d'ouvrir un
+  // nouvel onglet vers l'image (les data: URL ne s'ouvrent pas correctement
+  // dans un nouvel onglet sur Safari iPhone).
+  window.openLightbox = function(src){
+    var lb = document.getElementById('lightbox');
+    var img = document.getElementById('lightbox-img');
+    img.src = src;
+    lb.classList.add('open');
+  };
+  window.closeLightbox = function(e){
+    if(e) e.stopPropagation();
+    var lb = document.getElementById('lightbox');
+    lb.classList.remove('open');
+    document.getElementById('lightbox-img').src = '';
+  };
 
   /* ============================= PHOTOS ============================= */
   // Photos redimensionnées/compressées sur l'appareil, puis stockées
@@ -1269,8 +1294,8 @@ const db = getFirestore(fbApp);
         var photosHtml = '';
         if(v.photoStore || v.photoShelf){
           photosHtml = '<div class="visit-photos">'+
-            (v.photoStore ? '<a href="'+v.photoStore.dataUrl+'" target="_blank" rel="noopener" title="Photo du magasin"><img src="'+v.photoStore.dataUrl+'" alt=""></a>' : '')+
-            (v.photoShelf ? '<a href="'+v.photoShelf.dataUrl+'" target="_blank" rel="noopener" title="Photo du rayon"><img src="'+v.photoShelf.dataUrl+'" alt=""></a>' : '')+
+            (v.photoStore ? '<img src="'+v.photoStore.dataUrl+'" alt="Photo du magasin" title="Photo du magasin" onclick="openLightbox(this.src)">' : '')+
+            (v.photoShelf ? '<img src="'+v.photoShelf.dataUrl+'" alt="Photo du rayon" title="Photo du rayon" onclick="openLightbox(this.src)">' : '')+
           '</div>';
         }
         html += '<div class="feed-item">'+
@@ -1471,8 +1496,8 @@ const db = getFirestore(fbApp);
         var photosHtml = '';
         if(v.photoStore || v.photoShelf){
           photosHtml = '<div class="visit-photos">'+
-            (v.photoStore ? '<a href="'+v.photoStore.dataUrl+'" target="_blank" rel="noopener" title="Photo du magasin"><img src="'+v.photoStore.dataUrl+'" alt="Photo du magasin"></a>' : '')+
-            (v.photoShelf ? '<a href="'+v.photoShelf.dataUrl+'" target="_blank" rel="noopener" title="Photo du rayon"><img src="'+v.photoShelf.dataUrl+'" alt="Photo du rayon"></a>' : '')+
+            (v.photoStore ? '<img src="'+v.photoStore.dataUrl+'" alt="Photo du magasin" title="Photo du magasin" onclick="openLightbox(this.src)">' : '')+
+            (v.photoShelf ? '<img src="'+v.photoShelf.dataUrl+'" alt="Photo du rayon" title="Photo du rayon" onclick="openLightbox(this.src)">' : '')+
           '</div>';
         }
         html += '<div class="visit-entry">'+
