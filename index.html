@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Client Snack & Moi</title>
+<meta name="description" content="Prospection commerciale Snack &amp; Moi : carte des points de vente, fiches contact et comptes rendus de visite.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+
+<style>
+  :root{
+    --bg:#faf7f1;
+    --surface:#ffffff;
+    --surface-2:#f1ece0;
+    --ink:#232d24;
+    --ink-soft:#5b6b5c;
+    --ink-faint:#8b9a8a;
+    --border:#e3dcc8;
+    --border-soft:#ece5d5;
+    --primary:#2f5233;
+    --primary-ink:#ffffff;
+    --primary-soft:#e2ead9;
+    --accent:#c1442d;
+    --accent-soft:#f6e2d6;
+    --warn:#a9700f;
+    --warn-soft:#f5e6c7;
+    --good:#2f7a4f;
+    --good-soft:#dcefe0;
+    --danger:#b23a2e;
+    --danger-soft:#f7ded9;
+    --map-bg:#efe8d8;
+    --map-line:#d9cfb4;
+    --map-sea:#c7dbd9;
+    --map-sea-line:#9fc0bd;
+    --map-border:#b0a687;
+    --shadow:0 1px 2px rgba(35,45,36,.06), 0 8px 24px -12px rgba(35,45,36,.18);
+    --font-display:'Fraunces',ui-serif,Georgia,serif;
+    --font-body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#161c17;
+      --surface:#1f2620;
+      --surface-2:#242c25;
+      --ink:#eae5d6;
+      --ink-soft:#a7b3a5;
+      --ink-faint:#77857a;
+      --border:#333e30;
+      --border-soft:#2b3529;
+      --primary:#7cc696;
+      --primary-ink:#0f1710;
+      --primary-soft:#26362a;
+      --accent:#e38863;
+      --accent-soft:#3a2a22;
+      --warn:#e3b15a;
+      --warn-soft:#3a3120;
+      --good:#7cc696;
+      --good-soft:#233129;
+      --danger:#e58c80;
+      --danger-soft:#3a2521;
+      --map-bg:#1c231d;
+      --map-line:#303a2c;
+      --map-sea:#16262a;
+      --map-sea-line:#254349;
+      --map-border:#4a5642;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#161c17;
+    --surface:#1f2620;
+    --surface-2:#242c25;
+    --ink:#eae5d6;
+    --ink-soft:#a7b3a5;
+    --ink-faint:#77857a;
+    --border:#333e30;
+    --border-soft:#2b3529;
+    --primary:#7cc696;
+    --primary-ink:#0f1710;
+    --primary-soft:#26362a;
+    --accent:#e38863;
+    --accent-soft:#3a2a22;
+    --warn:#e3b15a;
+    --warn-soft:#3a3120;
+    --good:#7cc696;
+    --good-soft:#233129;
+    --danger:#e58c80;
+    --danger-soft:#3a2521;
+    --map-bg:#1c231d;
+    --map-line:#303a2c;
+    --map-sea:#16262a;
+    --map-sea-line:#254349;
+    --map-border:#4a5642;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:14px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    min-height:100svh;
+    max-width:100%;
+    padding-inline:0;
+  }
+  button{font-family:inherit;font-size:inherit;color:inherit;}
+  input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;}
+  button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,a:focus-visible{
+    outline:2px solid var(--primary); outline-offset:2px;
+  }
+  .tabular{font-variant-numeric:tabular-nums;}
+
+  /* ---------- top bar ---------- */
+  header.topbar{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:10px 16px 0;
+  }
+  .topbar-row{display:flex; align-items:baseline; justify-content:space-between; gap:12px;}
+  .brand{display:flex; flex-direction:column; gap:1px; min-width:0;}
+  .brand .name{
+    font-family:var(--font-display); font-weight:600; font-size:19px; letter-spacing:.2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .brand .sub{font-size:11.5px; color:var(--ink-faint);}
+  .me-chip{
+    display:flex; align-items:center; gap:6px;
+    border:1px solid var(--border); background:var(--surface-2);
+    border-radius:100px; padding:5px 10px 5px 6px; font-size:12px; color:var(--ink-soft);
+    white-space:nowrap; cursor:pointer;
+  }
+  .me-dot{width:7px;height:7px;border-radius:50%;background:var(--primary);flex:none;}
+  nav.tabs{display:flex; gap:2px; margin-top:10px;}
+  nav.tabs button{
+    flex:1; background:none; border:none; padding:9px 4px 10px;
+    font-size:12.5px; font-weight:600; color:var(--ink-faint);
+    border-bottom:2px solid transparent; cursor:pointer;
+  }
+  nav.tabs button.active{color:var(--primary); border-bottom-color:var(--primary);}
+
+  /* ---------- filter bar ---------- */
+  .filterbar{
+    display:flex; gap:8px; padding:10px 16px; background:var(--bg);
+    border-bottom:1px solid var(--border-soft); overflow-x:auto;
+    position:sticky; top:calc(env(safe-area-inset-top,0px) + 84px); z-index:20;
+  }
+  .filterbar input[type=search]{
+    flex:1; min-width:120px; border:1px solid var(--border); background:var(--surface);
+    border-radius:9px; padding:8px 11px; color:var(--ink);
+  }
+  .chip{
+    flex:none; border:1px solid var(--border); background:var(--surface);
+    border-radius:100px; padding:7px 12px; font-size:12px; font-weight:600; color:var(--ink-soft);
+    cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:5px;
+  }
+  .chip.active{background:var(--primary); border-color:var(--primary); color:var(--primary-ink);}
+  .chip .n{opacity:.75; font-weight:500;}
+
+  .search-dropdown{
+    position:fixed; z-index:60; background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; box-shadow:var(--shadow); max-height:min(60vh,360px); overflow-y:auto;
+    padding:6px;
+  }
+  .search-dropdown[hidden]{display:none;}
+  .search-dropdown .sd-hint{padding:10px 8px; font-size:12.5px; color:var(--ink-faint);}
+  .search-dropdown .sd-row{
+    width:100%; display:flex; align-items:center; gap:9px; text-align:left;
+    background:none; border:none; border-radius:8px; padding:9px 8px; cursor:pointer;
+  }
+  .search-dropdown .sd-row:active, .search-dropdown .sd-row:hover{background:var(--bg);}
+  .search-dropdown .sd-row .status-dot{flex:none;}
+  .search-dropdown .sd-body{min-width:0; flex:1; display:flex; flex-direction:column; gap:1px;}
+  .search-dropdown .sd-title{font-size:13.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .search-dropdown .sd-sub{font-size:12px; color:var(--ink-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .search-dropdown .sd-more{padding:8px; font-size:12px; color:var(--ink-faint); text-align:center;}
+
+  main{flex:1; min-height:0; display:flex; flex-direction:column; position:relative;}
+  .view{display:none; flex:1; min-height:0; flex-direction:column;}
+  .view.active{display:flex;}
+
+  /* ---------- map ---------- */
+  .map-wrap{position:relative; flex:1; min-height:0; background:var(--map-bg); overflow:hidden;}
+  .map-wrap svg{display:block; width:100%; height:100%; touch-action:none; -webkit-user-select:none; user-select:none;}
+  .zoom-controls{
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    display:flex; flex-direction:column; gap:6px; z-index:5;
+  }
+  .zoom-btn{
+    width:34px; height:34px; border-radius:10px; background:var(--surface); border:1px solid var(--border);
+    box-shadow:var(--shadow); font-size:17px; font-weight:600; color:var(--ink-soft); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; line-height:1;
+  }
+  .zoom-btn.reset{font-size:13px;}
+  .map-toolbar{
+    position:absolute; top:10px; left:12px; right:12px; display:flex; justify-content:space-between; gap:8px; pointer-events:none;
+  }
+  .map-toolbar > *{pointer-events:auto;}
+  .pill-btn{
+    background:var(--surface); border:1px solid var(--border); border-radius:100px;
+    padding:7px 13px; font-size:12px; font-weight:600; color:var(--ink-soft); box-shadow:var(--shadow); cursor:pointer;
+  }
+  .pill-btn.active{background:var(--primary); color:var(--primary-ink); border-color:var(--primary);}
+  .legend{
+    position:absolute; bottom:12px; left:12px; background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:8px 10px; box-shadow:var(--shadow); font-size:11px; color:var(--ink-soft);
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .legend .row{display:flex; align-items:center; gap:6px;}
+  .legend .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  .map-note{
+    position:absolute; bottom:12px; right:12px; background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:7px 11px; box-shadow:var(--shadow); font-size:11px; color:var(--ink-soft); max-width:150px;
+  }
+  .map-note a{color:var(--accent); font-weight:600;}
+  .map-dot{cursor:pointer;}
+  .map-dot circle.halo{opacity:0;}
+  .map-dot.selected circle.halo{opacity:1;}
+  /* counter-scales dots against the pan/zoom transform, so zooming in spreads
+     dot CENTERS apart (real separation) without inflating dot size */
+  .dot-scale-wrap{ transform:scale(var(--dot-inv-scale,1)); transform-origin:0 0; }
+  .dot-label{
+    font-family:var(--font-body); font-size:10px; font-weight:700; fill:var(--ink);
+    paint-order:stroke; stroke:var(--surface); stroke-width:3px; stroke-linejoin:round;
+    opacity:0; pointer-events:none; transition:opacity .12s;
+  }
+  #map-g.labels-on .dot-label{ opacity:1; }
+  #map-g.labels-on .landmark{ opacity:0; transition:opacity .12s; }
+  .map-label{font-family:var(--font-body); font-size:9px; fill:var(--ink-faint);}
+  .map-city{font-family:var(--font-body); font-size:9.5px; fill:var(--ink-faint); font-weight:500;}
+  .map-city-dot{fill:var(--ink-faint);}
+
+  /* ---------- list ---------- */
+  .list-scroll{flex:1; overflow-y:auto; padding:10px 16px 24px; display:flex; flex-direction:column; gap:8px;}
+  .list-count{font-size:11.5px; color:var(--ink-faint); padding:2px 2px 4px;}
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:11px 13px; display:flex; align-items:center; gap:10px; cursor:pointer; text-align:left;
+    width:100%; box-shadow:var(--shadow);
+  }
+  .status-dot{width:9px;height:9px;border-radius:50%; flex:none;}
+  .card-body{min-width:0; flex:1; display:flex; flex-direction:column;}
+  .card-title{font-weight:700; font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .card-sub{font-size:12px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:1px;}
+  .card-meta{font-size:11px; color:var(--ink-faint); margin-top:3px;}
+  .chev{color:var(--ink-faint); flex:none;}
+
+  /* ---------- dashboard ---------- */
+  .dash-scroll{flex:1; overflow-y:auto; padding:14px 16px 28px; display:flex; flex-direction:column; gap:18px;}
+  .stat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
+  @media (min-width:520px){ .stat-grid{grid-template-columns:repeat(4,1fr);} }
+  .stat-tile{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 13px;
+    display:flex; flex-direction:column; gap:2px;
+  }
+  .stat-tile .val{font-family:var(--font-display); font-size:26px; font-weight:600;}
+  .stat-tile .lbl{font-size:11px; color:var(--ink-soft);}
+  .stat-tile.warn .val{color:var(--warn);}
+  .stat-tile.danger .val{color:var(--danger);}
+  .stat-tile.good .val{color:var(--good);}
+  h2.section-title{
+    font-family:var(--font-display); font-size:16px; font-weight:600; margin:0 0 2px;
+  }
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; gap:8px;}
+  .muted-link{font-size:11.5px; color:var(--ink-faint); background:none; border:none; cursor:pointer; text-decoration:underline;}
+  .feed{display:flex; flex-direction:column; gap:0;}
+  .feed-item{
+    display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--border-soft);
+  }
+  .feed-item:last-child{border-bottom:none;}
+  .feed-avatar{
+    width:28px;height:28px;border-radius:50%; background:var(--primary-soft); color:var(--primary);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex:none;
+  }
+  .feed-body{min-width:0; flex:1; display:flex; flex-direction:column;}
+  .feed-top{display:flex; justify-content:space-between; gap:8px; font-size:12.5px;}
+  .feed-top .who{font-weight:700;}
+  .feed-top .when{color:var(--ink-faint); flex:none;}
+  .feed-client{font-size:12px; color:var(--ink-soft); margin-top:1px;}
+  .feed-notes{font-size:12.5px; margin-top:4px; white-space:pre-wrap; word-break:break-word;}
+  .empty-hint{font-size:12.5px; color:var(--ink-faint); padding:10px 0;}
+  .rank-list{display:flex; flex-direction:column; gap:7px;}
+  .rank-row{display:flex; align-items:center; gap:9px; font-size:12.5px;}
+  .rank-name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .rank-bar-track{width:70px; height:6px; border-radius:4px; background:var(--surface-2); overflow:hidden; flex:none;}
+  .rank-bar-fill{height:100%; background:var(--primary); border-radius:4px;}
+  .rank-count{width:20px; text-align:right; color:var(--ink-soft); flex:none;}
+
+  /* ---------- sheet (detail) ---------- */
+  .scrim{
+    position:fixed; inset:0; background:rgba(20,24,18,.42); z-index:39; opacity:0; pointer-events:none; transition:opacity .18s;
+  }
+  .scrim.open{opacity:1; pointer-events:auto;}
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:40;
+    background:var(--surface); border-radius:16px 16px 0 0; box-shadow:0 -8px 30px rgba(0,0,0,.2);
+    max-height:88svh; display:flex; flex-direction:column;
+    transform:translateY(100%); transition:transform .2s ease;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .sheet.open{transform:translateY(0);}
+  @media (min-width:720px){
+    .sheet{ left:auto; right:16px; bottom:16px; width:400px; border-radius:16px; max-height:calc(100svh - 32px); }
+  }
+  .sheet-handle{width:36px;height:4px;border-radius:3px;background:var(--border);margin:9px auto 2px; flex:none;}
+  .sheet-scroll{overflow-y:auto; padding:6px 18px 18px;}
+  .sheet-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-top:6px;}
+  .sheet-title{font-family:var(--font-display); font-weight:600; font-size:18px; line-height:1.2;}
+  .sheet-close{background:var(--surface-2); border:none; border-radius:50%; width:28px; height:28px; flex:none; cursor:pointer; color:var(--ink-soft);}
+  .sheet-status{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:3px 9px 3px 7px; border-radius:100px; margin-top:7px;}
+  .sheet-addr{font-size:13px; color:var(--ink-soft); margin-top:8px;}
+  .sheet-actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  .btn{
+    border-radius:9px; padding:9px 13px; font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--border);
+    background:var(--surface); color:var(--ink); display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+  }
+  .btn.primary{background:var(--primary); color:var(--primary-ink); border-color:var(--primary);}
+  .btn.accent{background:var(--accent); color:#fff; border-color:var(--accent);}
+  .btn.block{width:100%; justify-content:center;}
+  .info-grid{margin-top:12px; display:flex; flex-direction:column; gap:7px;}
+  .info-row{display:flex; gap:9px; font-size:12.5px; align-items:flex-start;}
+  .info-row .k{color:var(--ink-faint); width:64px; flex:none; padding-top:1px;}
+  .info-row .v{color:var(--ink); word-break:break-word;}
+  .info-row a{color:var(--primary); text-decoration:none; font-weight:600;}
+  .copy-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .copy-btn{
+    border:1px solid var(--border); background:var(--surface-2); color:var(--ink-soft);
+    border-radius:7px; padding:3px 8px; font-size:10.5px; font-weight:600; cursor:pointer; flex:none;
+  }
+  .copy-btn.copied{background:var(--good-soft); color:var(--good); border-color:transparent;}
+  .photo-field{margin-top:6px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .photo-status{font-size:11.5px; color:var(--ink-faint);}
+  .photo-preview{position:relative; width:64px; height:64px; border-radius:10px; overflow:hidden; border:1px solid var(--border); flex:none;}
+  .photo-preview img{width:100%; height:100%; object-fit:cover; display:block;}
+  .photo-remove{
+    position:absolute; top:2px; right:2px; width:18px; height:18px; border-radius:50%; border:none;
+    background:rgba(20,24,18,.6); color:#fff; font-size:10px; line-height:1; cursor:pointer;
+  }
+  .visit-photos{display:flex; gap:8px; margin-top:6px;}
+  .visit-photos a{display:block; width:52px; height:52px; border-radius:8px; overflow:hidden; border:1px solid var(--border);}
+  .visit-photos img{width:100%; height:100%; object-fit:cover; display:block;}
+  hr.sep{border:none; border-top:1px solid var(--border-soft); margin:16px 0;}
+  .form textarea{
+    width:100%; border:1px solid var(--border); background:var(--surface-2); border-radius:9px; padding:9px 10px;
+    min-height:78px; resize:vertical; margin-top:4px;
+  }
+  .form input[type=text],.form input[type=date]{
+    width:100%; border:1px solid var(--border); background:var(--surface-2); border-radius:9px; padding:9px 10px; margin-top:4px;
+  }
+  .form label{font-size:11.5px; font-weight:600; color:var(--ink-soft); display:block; margin-top:10px;}
+  .form label:first-child{margin-top:0;}
+  .form-row{display:flex; gap:10px;}
+  .form-row > div{flex:1;}
+  .form-msg{font-size:11.5px; margin-top:8px; padding:7px 9px; border-radius:8px;}
+  .form-msg.ok{background:var(--good-soft); color:var(--good);}
+  .form-msg.err{background:var(--danger-soft); color:var(--danger);}
+  .form-msg.local{background:var(--warn-soft); color:var(--warn);}
+  .visit-log{margin-top:6px; display:flex; flex-direction:column; gap:10px;}
+  .visit-entry{border-left:2px solid var(--border); padding-left:10px;}
+  .visit-entry .vtop{font-size:12px; font-weight:700; display:flex; justify-content:space-between; gap:8px;}
+  .visit-entry .vtop .d{color:var(--ink-faint); font-weight:500;}
+  .visit-entry .vnotes{font-size:12.5px; margin-top:2px; white-space:pre-wrap; word-break:break-word;}
+  .pending-tag{font-size:10px; color:var(--warn); font-weight:600;}
+  .sync-banner{
+    background:var(--warn-soft); color:var(--warn); font-size:11.5px; padding:7px 16px; text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">276</span> points de vente</span>
+      </div>
+      <button class="me-chip" id="me-chip" type="button" title="Changer de commercial">
+        <span class="me-dot"></span><span id="me-name">Commercial</span>
+      </button>
+    </div>
+    <nav class="tabs">
+      <button data-view="map" class="active">Carte</button>
+      <button data-view="list">Liste</button>
+      <button data-view="dashboard">Tableau de bord</button>
+    </nav>
+  </header>
+
+  <div class="filterbar">
+    <input type="search" id="search-input" placeholder="Enseigne, ville, référence…" autocomplete="off">
+    <button class="chip active" data-status="all">Tous <span class="n" id="count-all"></span></button>
+    <button class="chip" data-status="never">Pas encore visité <span class="n" id="count-never"></span></button>
+    <button class="chip" data-status="due">À relancer <span class="n" id="count-due"></span></button>
+    <button class="chip" data-status="ok">Suivi actif <span class="n" id="count-ok"></span></button>
+    <div class="search-dropdown" id="search-dropdown" hidden></div>
+  </div>
+
+  <div id="sync-banner" class="sync-banner" hidden></div>
+
+  <main>
+    <section class="view active" id="view-map">
+      <div class="map-wrap" id="map-wrap">
+        <svg id="map-svg" viewBox="0 0 400 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Carte des clients"></svg>
+        <div class="map-toolbar">
+          <button class="pill-btn active" id="btn-extent-region" type="button">Pays Basque · Landes · Béarn</button>
+          <button class="pill-btn" id="btn-extent-all" type="button">France entière</button>
+        </div>
+        <div class="legend">
+          <div class="row"><span class="dot" style="background:var(--danger)"></span>Pas encore visité</div>
+          <div class="row"><span class="dot" style="background:var(--warn)"></span>À relancer</div>
+          <div class="row"><span class="dot" style="background:var(--good)"></span>Suivi actif</div>
+        </div>
+        <div class="map-note" id="map-note" hidden></div>
+        <div class="zoom-controls">
+          <button class="zoom-btn" id="zoom-in" type="button" aria-label="Zoomer">+</button>
+          <button class="zoom-btn" id="zoom-out" type="button" aria-label="Dézoomer">–</button>
+          <button class="zoom-btn reset" id="zoom-reset" type="button" aria-label="Recentrer">⤢</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-list">
+      <div class="list-scroll" id="list-scroll"></div>
+    </section>
+
+    <section class="view" id="view-dashboard">
+      <div class="dash-scroll" id="dash-scroll"></div>
+    </section>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-scroll" id="sheet-scroll"></div>
+</div>
+
+<script id="client-data-json" type="application/json">[{"r":"C-00045","n":"L'EPICIER BIO","a":"5 RUE DES PLUVIERS","c":"BAYONNE","p":64100,"t":"0559206521","k":"Pauline Lager","e":"sebastien@epicier-bio.fr","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00387","n":"ADOUR DISTRIBUTION - LECLERC ST PAUL","a":"234 RUE MAURICE MENTON","c":"ST PAUL LES DAX","p":40990,"t":"","k":"PIERRE LESPIAU","e":"pierre.lespiau@saint-paul.leclerc","lat":43.72566,"lng":-1.05283,"x":false},{"r":"C-00239","n":"Al gramo - 72824842B","a":"calle iturrama n39","c":"PAMPLONA","p":31007,"t":"+34 722 69 78 43","k":"Maite Sanchez de la Majestad","e":"algramotienda@gmail.com","lat":42.81687,"lng":-1.64323,"x":false},{"r":"C-00403","n":"ALAIN PINCK","a":"115 RUE JOLIVET","c":"TOURS","p":37000,"t":"33698240773","k":"","e":"appinck@gmail.com","lat":47.39484,"lng":0.70398,"x":false},{"r":"C-00129","n":"ALANANA'S ANGRESSE PRIMEURS","a":"23 IMP DE LA FORGE","c":"ANGRESSE","p":40150,"t":"0558419186","k":"Laurent MALGRANGE","e":"alananas40150@gmail.com","lat":43.65862,"lng":-1.37242,"x":false},{"r":"C-00057","n":"ALZUYETA / INTERMARCHE ITXASSOU","a":"CD 918","c":"ITXASSOU","p":64250,"t":"0540329730","k":"JOSY","e":"Pdv11330@mousquetaires.com","lat":43.32959,"lng":-1.4055,"x":false},{"r":"C-00270","n":"AMALUR - ESPELETTE","a":"110 MERKATU PLAZA","c":"ESPELETTE","p":64250,"t":"0626900729","k":"MIGUEL","e":"sarlamalur@gmail.com","lat":43.34052,"lng":-1.44798,"x":false},{"r":"C-00177","n":"ARGIKO AZIA","a":"LES SERRES NAHIA - RD 918","c":"ST PEE SUR NIVELLE","p":64310,"t":"0788028682","k":"Nathalie TERRADE","e":"contact@argiko-azia.fr","lat":43.35645,"lng":-1.55058,"x":false},{"r":"C-00400","n":"ARIAC/GUILLAUME BROCARD","a":"5 IMPASSE DES MILLEPERTUIS","c":"VENDARGUES","p":34740,"t":"","k":"GUILLAUME BROCARD","e":"g.brocard@hotmail.fr","lat":43.65833,"lng":3.97,"x":false},{"r":"C-00243","n":"Au Jardin d'Alice Biomonde","a":"168 AV. MONTAIGNE","c":"ST MEDARD EN JALLES","p":33160,"t":"05 56 99 22 42","k":"Jérémie BODIN","e":"contact@aujardindalice.fr","lat":44.8955,"lng":-0.71779,"x":false},{"r":"C-00091","n":"AU MARCHE DE MAGALIE","a":"210 D810","c":"URRUGNE","p":64122,"t":"0559239330","k":"Christophe YRASTORZA","e":"aumarchedemagalie@gmail.com","lat":43.36243,"lng":-1.70019,"x":false},{"r":"C-00069","n":"BARAJAS PRIMEURS","a":"15 ROUTE DE TERCIS","c":"DAX","p":40100,"t":"05 58 70 27 61","k":"Stéphanie et Stéphane Fouchet","e":"sas-fp2s@orange.fr","lat":43.71032,"lng":-1.05366,"x":false},{"r":"C-00140","n":"BARATZE FRUTEGIA - ZOUHAIR EL BOUKILI MOUMEN","a":"CALLE GRAL. ETXAGUE,3 - BAJO","c":"DONOSTIA","p":20003,"t":"34688803943","k":"ZOUHAIR EL BOUKILI MOUMEN","e":"zouhair@gmail.com","lat":43.3183,"lng":-1.9812,"x":false},{"r":"C-00027","n":"BASTIDARRA","a":"35 ALLEE DES BARTHES","c":"BARDOS","p":64250,"t":"05 59 03 23 70","k":"Stéphanie Quercy","e":"magasin@bastidarra.fr","lat":43.47511,"lng":-1.20354,"x":false},{"r":"C-00061","n":"BATTELEKU","a":"3 AVENUE DE JALDAY","c":"ST JEAN DE LUZ","p":64500,"t":"0559471143","k":"Romain Machicote","e":"conserverie@jeandeluz.fr","lat":43.38871,"lng":-1.66267,"x":false},{"r":"C-00110","n":"Béarn gourmand","a":"PLACE DE LA REPUBLIQUE","c":"PAU","p":64000,"t":"0559275078","k":"Anne-Marie LOUBIX","e":"pau-gourmand@orange.fr","lat":43.31117,"lng":-0.35583,"x":false},{"r":"C-00279","n":"BIADIS8 CARREFOUR CITY BTZ","a":"2 RUE DU CENTRE","c":"BIARRITZ","p":64200,"t":"0559241801","k":"Vincent Amat","e":"vincent_amat@carrefour.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00392","n":"BIDEAK - carrefour Market Hendaye","a":"20 LES ALLEES","c":"HENDAYE","p":64700,"t":"05 59 20 79 79","k":"Sandy","e":"sandy_milan@franchise.carrefour.com","lat":43.35809,"lng":-1.7744,"x":false},{"r":"C-00168","n":"Bienvenue à la Ferme Urrugne - MADELE 64","a":"210, ROUTE DEPARTEMENTALE 810","c":"URRUGNE","p":64122,"t":"0616588480","k":"Thomas CHASSERIAUD","e":"baf.urrugne@gmail.com","lat":43.36243,"lng":-1.70019,"x":false},{"r":"C-00363","n":"BIO BIZI - EZTIBAR ZAZPI","a":"Serrano Anguita Kalea, 5","c":"DONOSTIA   SAN SEBASTI  N","p":20008,"t":"+34 843 93 11 21","k":"Marian","e":"biobizi@biobizi.eus","lat":43.3183,"lng":-1.9812,"x":true},{"r":"C-00390","n":"BIO CORNEBARRIEU - BIOCOOP","a":"6 RUE EMILE DEWOITINE","c":"CORNEBARRIEU","p":31700,"t":"05 34 59 08 74","k":"SANDRINE","e":"biocoopsandrine@gmail.com","lat":43.64895,"lng":1.32407,"x":false},{"r":"C-00391","n":"BIO MONTREDON - BIOCOOP","a":"2 RUE D'ARIANE","c":"L UNION","p":31240,"t":"05 62 30 33 60","k":"ANGELA","e":"biocoop.montredon@organicsas.fr","lat":43.66042,"lng":1.48264,"x":false},{"r":"C-00368","n":"BIO OLORON (BIOCOOP)","a":"2 RUE GERARD ROUSSEL","c":"OLORON STE MARIE","p":64400,"t":"05 59 39 00 80","k":"Chritelle Lacoume","e":"epi@biocoop-oloron.fr","lat":43.19441,"lng":-0.61069,"x":false},{"r":"C-00212","n":"BIO SAINT PAUL LES DAX - BIOCOOP L EVEIL","a":"AV GASTON PHOEBUS","c":"ST PAUL LES DAX","p":40990,"t":"","k":"Maxime","e":"sec@biocoopleveil.fr","lat":43.72566,"lng":-1.05283,"x":false},{"r":"C-00349","n":"Biocoop Le Perget - BIO OCCITANE","a":"1 AV ANDRE-MARIE AMPERE","c":"COLOMIERS","p":31770,"t":"05 61 49 14 74","k":"","e":"biocoop.leperget@organicsas.fr","lat":43.61058,"lng":1.33467,"x":false},{"r":"C-00287","n":"Biocoop les jardins - Biocoop Capbreton","a":"1 RUE MADELEINE CASTAING","c":"CAPBRETON","p":40130,"t":"05 33 09 34 75","k":"Ben","e":"capbreton@biocooplesjardins.fr","lat":43.64238,"lng":-1.43123,"x":false},{"r":"C-00351","n":"Biocoop Quint Fonsegrives - BIO QUINT","a":"12 CHEM. DE RIBAUTE","c":"QUINT FONSEGRIVES","p":31130,"t":"05 62 47 08 31","k":"","e":"commande@biocoop-quint.fr","lat":43.58,"lng":1.55,"x":false},{"r":"C-00056","n":"BIODIET CAPBRETON","a":"4, RUE DES RESINIERS","c":"CAPBRETON","p":40130,"t":"0675449783","k":"Lydie Theodorou","e":"biodietcapbreton@orange.fr","lat":43.64238,"lng":-1.43123,"x":false},{"r":"C-00092","n":"BIOMONDE KIMUA","a":"14 PLACE LOUIS LAFFARGUE","c":"LAHONCE","p":64990,"t":"05 59 55 03 44","k":"Thibault PATHIAS LAMOULIATTE","e":"biomondekimua@orange.fr","lat":43.4825,"lng":-1.39112,"x":false},{"r":"C-00032","n":"BIPIA - Magasin","a":"619 ROUTE D'HALSOU","c":"LARRESSORE","p":64480,"t":"0559932186","k":"Mr Xavier Pierre","e":"contact@bipia.com","lat":43.37024,"lng":-1.43924,"x":false},{"r":"C-00039","n":"BIRROU (VIVAL)","a":"CHEMIN OSTALAPIA","c":"AHETZE","p":64210,"t":"0559419513","k":"","e":"vival.ahetze@gmail.com","lat":43.40561,"lng":-1.57138,"x":false},{"r":"C-00309","n":"BIZIGRANEL - Barakaldo","a":"Av Euskadi 28 bizigranel","c":"BARAKALDO","p":48902,"t":"+34 688 64 30 43","k":"Sonia Hernández","e":"alimentacion@bizigranel.com","lat":43.29639,"lng":-2.98813,"x":false},{"r":"C-00054","n":"BOBY - DE LA CAVE AU GARDE MANGER","a":"53 BD DES CIGALES","c":"CAPBRETON","p":40130,"t":"05 58 42 55 49","k":"David Mensan","e":"capbreton.cgm@gmail.com","lat":43.64238,"lng":-1.43123,"x":false},{"r":"C-00249","n":"BONI - ALIMENTATION  ITSAS MENDI","a":"CHEM. DE DUHARTIA","c":"ST JEAN DE LUZ","p":64500,"t":"06 36 18 66 26","k":"ALICE","e":"epiceriegoni@gmail.com","lat":43.38871,"lng":-1.66267,"x":false},{"r":"C-00292","n":"BORDEVIELLE","a":"6 IMP. DES BLEUETS","c":"VIEUX BOUCAU LES BAINS","p":40480,"t":"05 58 48 10 52","k":"JOANIE","e":"bordeviellecontact@gmail.com","lat":43.78644,"lng":-1.40413,"x":false},{"r":"C-00166","n":"Boucherie de Brassenx","a":"11, RUE D ALBRET","c":"YGOS","p":40110,"t":"0558518550","k":"Joaquim Pimenta","e":"boucheriedebrassenx@gmail.com","lat":44.0,"lng":-0.75,"x":false},{"r":"C-00200","n":"BOULANGERIE ESKUZ","a":"12 RUE PELLOT","c":"HENDAYE","p":64700,"t":"0782831845","k":"","e":"boulangeriebioeskuz@gmail.com","lat":43.35809,"lng":-1.7744,"x":false},{"r":"C-00126","n":"BOUTIQUE DE CHLOE","a":"179, CHEMIN D'IHINTZIA","c":"ST PEE SUR NIVELLE","p":64310,"t":"0672678405","k":"Desmarest Chloé","e":"chloe.desmarest@gmail.com","lat":43.35645,"lng":-1.55058,"x":false},{"r":"C-00314","n":"Camille Fromage et compagnie","a":"18 RUE DE BOIS","c":"LE POULIGUEN","p":44510,"t":"33783096868","k":"Camille Vibert","e":"cvcrfromagerie@hotmail.com","lat":47.26973,"lng":-2.4278,"x":false},{"r":"C-00163","n":"CANAL BIO - EAUX VIVES BIDART","a":"RTE NATIONALE 10","c":"BIDART","p":64210,"t":"0535459750","k":"Loicia","e":"canal-bio@orange.fr","lat":43.43698,"lng":-1.59294,"x":false},{"r":"C-00158","n":"CARREFOUR BAB2","a":"AV. JEAN LEON LAPORTE","c":"ANGLET","p":64600,"t":"0559458779","k":"Vanessa LABONNE","e":"vanessa_mespoulet@franchise.carrefour.com","lat":43.48921,"lng":-1.51921,"x":false},{"r":"C-00226","n":"CARREFOUR CITY SJDL - LELOUDIS","a":"87 RUE LEON GAMBETTA","c":"ST JEAN DE LUZ","p":64500,"t":"05 59 26 46 46","k":"Mme Girard","e":"leloudis1317@gmail.com","lat":43.38871,"lng":-1.66267,"x":false},{"r":"C-00366","n":"Carrefour Express Hendaye  - NACDIS","a":"12 RUE DES PINS","c":"HENDAYE","p":64700,"t":"05 59 20 10 65","k":"Eric","e":"sarlnacdis@gmail.com","lat":43.35809,"lng":-1.7744,"x":false},{"r":"C-00135","n":"CARREFOUR HYPERMARCHE ST JEAN DE LUZ FRA254","a":"20 ZI DE JALDAY","c":"ST JEAN DE LUZ","p":64500,"t":"0559433611","k":"Marion LABAIGT","e":"marion_labaigt@carrefour.Com","lat":43.38871,"lng":-1.66267,"x":false},{"r":"C-00217","n":"CARREFOUR MARKET CAUDERAN - SODIBOR","a":"172 RUE JULES FERRY 172 A 176","c":"BORDEAUX","p":33200,"t":"0556021313","k":"pierre deycard","e":"pierre_deycard@franchise.carrefour.com","lat":44.84044,"lng":-0.5805,"x":false},{"r":"C-00073","n":"CARREFOUR MARKET ST JEAN PdPORT Code FRPCGE","a":"AV DU JAI ALAI","c":"ST JEAN PIED DE PORT","p":64220,"t":"05 59 37 07 01","k":"Jérome Mondy","e":"jerome_mondy@carrefour.com","lat":43.16473,"lng":-1.23729,"x":false},{"r":"C-00353","n":"CASINO SHOP HENDAYE - MA PRINCESSE","a":"84 BOULEVARD DU GENERAL LECLERC","c":"HENDAYE","p":64700,"t":"07 78 04 53 57","k":"Philippe Lespes","e":"plespes40@gmail.com","lat":43.35809,"lng":-1.7744,"x":false},{"r":"C-00142","n":"CAVE DEMETER","a":"14 GRAND RUE","c":"VIEUX BOUCAU LES BAINS","p":40480,"t":"05 58 48 03 87","k":"M Thomas ESPIL","e":"cavedemeter@gmail.com","lat":43.78644,"lng":-1.40413,"x":false},{"r":"C-00386","n":"CHANDOBE - BIOSOMA","a":"21 BD PIERRE DELBREL","c":"MOISSAC","p":82200,"t":"05 63 04 18 44","k":"","e":"biosoma.cr@gmail.com","lat":44.10236,"lng":1.0945,"x":false},{"r":"C-00195","n":"CHARCUTERIE AUBARD","a":"80 AVENUE DU CAPITAINE RESPLANDY","c":"BAYONNE","p":64100,"t":"0559298487","k":"CEDRIC BERGEZ","e":"contact@charcuterie-aubard.fr","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00262","n":"CHEVREULDIS - SUPER U EXPRESS LYON","a":"72 RUE DE MARSEILLE","c":"LYON","p":69007,"t":"04 72 72 13 01","k":"DANCIE Cyprien","e":"cyprien.dancie@cooperative-u.fr","lat":45.74846,"lng":4.84671,"x":false},{"r":"C-00340","n":"CHEZ BOROI","a":"82 ETXEGUNEA PLAZA BERRI","c":"ITXASSOU","p":64250,"t":"0661440821","k":"EMMA BORAU","e":"borau.lilian@orange.fr","lat":43.32959,"lng":-1.4055,"x":false},{"r":"C-00210","n":"CHEZ FLO BIO","a":"1 PLACE DE LA RESISTANCE","c":"TARNOS","p":40220,"t":"09 82 25 75 67","k":"FLORENCE BLANVILLAIN","e":"floxydiet@yahoo.fr","lat":43.5417,"lng":-1.46281,"x":false},{"r":"C-00113","n":"CHEZ FRANCINE - ANGLET","a":"96 AV DE L ADOUR","c":"ANGLET","p":64600,"t":"09 79 31 80 78","k":"FRANCINE LANDEAU","e":"sisiny@orange.fr","lat":43.48921,"lng":-1.51921,"x":false},{"r":"C-00114","n":"CHEZ JO - EPICERIE LOCAL ET BIO","a":"20 RUE BRAUHAUBAN","c":"TARBES","p":65000,"t":"0648214462","k":"JONATHAN CHAMP","e":"chezjoepicerie@gmail.com","lat":43.23333,"lng":0.08333,"x":false},{"r":"C-00071","n":"CHEZ MAGENDIE","a":"11 AV. MARCEL DASSAULT","c":"LONS","p":64140,"t":"0616766095","k":"Delphine Morillon","e":"magendii@wanadoo.fr","lat":43.31505,"lng":-0.41105,"x":false},{"r":"C-00219","n":"Chez Mattin Traiteur - 3MG","a":"8 BOULEVARD VICTOR HUGO","c":"ST JEAN DE LUZ","p":64500,"t":"05 59 51 86 13","k":"Sylvie","e":"Fournisseurs.mattin@Bizipoz.com","lat":43.38871,"lng":-1.66267,"x":false},{"r":"C-00341","n":"COGIBIO - Biocoop Saveurs et Nature - Gradignan","a":"47 RUE DU PROFESSEUR BERNARD","c":"GRADIGNAN","p":33170,"t":"05 56 89 89 36","k":"Alexandre","e":"saveuretnature@wanadoo.fr","lat":44.77362,"lng":-0.61395,"x":false},{"r":"C-00109","n":"Comptoirs de la Bio Tarnos - Bio Nature Océan","a":"2 IMPASSE ROBINSON","c":"TARNOS","p":40220,"t":"0559449528","k":"Elisa, Fanny","e":"cmdebionatureocean@gmail.com","lat":43.5417,"lng":-1.46281,"x":false},{"r":"C-00121","n":"CONJAT PRIMEURS - Barajas Tarnos","a":"52 BD JACQUES DUCLOS","c":"TARNOS","p":40220,"t":"0642700352","k":"Mr Conjat Jessy","e":"barajas.primeurstarnos@gmail.com","lat":43.5417,"lng":-1.46281,"x":false},{"r":"C-00245","n":"Conserverie Bassin d'Arcachon - LES PARTITIONS CULINAIRES","a":"35 AV. DE CESAREE","c":"GUJAN MESTRAS","p":33470,"t":"05 57 63 88 91","k":"Raoul","e":"contact@conserverie-bassin-arcachon.com","lat":44.636,"lng":-1.06815,"x":false},{"r":"C-00273","n":"COREST","a":"77 RUE DE CASABLANCA","c":"ST VINCENT DE TYROSSE","p":40230,"t":"0558772415","k":"Valerie Parny","e":"corest-gastronomie@orange.fr","lat":43.66071,"lng":-1.30428,"x":false},{"r":"C-00336","n":"CVCR FROMAGERIE CAMILLE FROMAGE ET COMPAGNIE","a":"18 RUE DU BOIS","c":"LE POULIGUEN","p":44510,"t":"07 83 09 68 68","k":"CAMILLE VIBERT","e":"cvcrfromagerie@hotmail.com","lat":47.26973,"lng":-2.4278,"x":false},{"r":"C-00097","n":"D'UN COIN A L'AUTRE - EPICERIE","a":"1 B ROUTE D'ABOS","c":"PARDIES","p":64150,"t":"0613669653","k":"Coralie Goyeau","e":"coralie.goyeau64@gmail.com","lat":43.316,"lng":-0.616,"x":false},{"r":"C-00047","n":"DANS MON BIOCAL - BIO VRAC","a":"26, AVENUE DE LA MARNE","c":"BIARRITZ","p":64200,"t":"0559479367","k":"Patricia RONTEIX","e":"magasin.biovrac@gmail.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00197","n":"DAY BY DAY- BIARRITZ-SARL-LAURIANNE","a":"DOCKS DE, 44 RUE LUIS MARIANO","c":"BIARRITZ","p":64200,"t":"05 59 26 02 39","k":"LAURIANNE FOUILLOT","e":"daybyday.biarritz@gmail.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00048","n":"DEBLON - VRAC & BIO","a":"PLACE DE LA MAIRIE","c":"TOSSE","p":40230,"t":"0973522433","k":"Sarah","e":"contact@vracandbio.com","lat":43.68904,"lng":-1.33286,"x":false},{"r":"C-00065","n":"DGD GASCOGNE - Fantaisies Gasconnes","a":"2 PLACE DU CHENE ROND","c":"ST JUSTIN","p":40240,"t":"0670496172","k":"Dominique Dejean","e":"fantaisiesgasconnes@gmail.com","lat":43.881,"lng":-0.235,"x":false},{"r":"C-00148","n":"DON ULPIANO - GUSTU ONA","a":"12 AV. VICTOR HUGO","c":"BIARRITZ","p":64200,"t":"0607645355","k":"Me Corinne GONZALES","e":"biarritz@donulpiano.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00013","n":"DONYBANE","a":"512 NAGUSIA, KARRIKA","c":"AINHOA","p":64250,"t":"0667951313","k":"Corinne Ducouneau","e":"donybane@orange.fr","lat":43.318,"lng":-1.4645,"x":false},{"r":"C-00357","n":"Du pain sur la planche - SARL SARRAMAGNA","a":"110 RUE DES PECHEURS","c":"CAPBRETON","p":40130,"t":"06 82 42 86 85","k":"GERALDINE","e":"matteo10@orange.fr","lat":43.64238,"lng":-1.43123,"x":false},{"r":"C-00358","n":"DUNE STORE  - EPICERIE CAMPING DE LA PLAGE MIMIZAN","a":"9 BD DE L'ATLANTIQUE","c":"MIMIZAN","p":40200,"t":"06 70 69 24 36","k":"STEPHANIE GRYMONPREZ","e":"lacasadestoutous@gmail.com","lat":44.20135,"lng":-1.22873,"x":false},{"r":"C-00316","n":"DURANCE","a":"772 RUE ANDRE JEAN BOUDOY","c":"AVIGNON","p":84140,"t":"0490881643","k":"Maryline Blanc","e":"maryline.blanc@durance.fr","lat":43.94834,"lng":4.80892,"x":false},{"r":"C-00190","n":"E LECLERC BAYONNE NORD - SODIBAY","a":"90 AVENUE HENRI DE NAVARRE","c":"BAYONNE","p":64100,"t":"0559503050","k":"Mme Sylvie Desgranges","e":"sylvie.desgranges@bayonne.leclerc","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00187","n":"E LECLERC EXPRESS - OSSES DISTRIBUTION","a":"GAHARDOU SUD","c":"OSSES","p":64780,"t":"0559492124","k":"Anne-Marie ARRETECH","e":"annemarie.arretche@bayonne.leclerc","lat":43.245,"lng":-1.3,"x":false},{"r":"C-00211","n":"E.LECLERC SOUSTONS - SAS AQUIPYRDIS","a":"ROUTE DE TOSSE","c":"SOUSTONS","p":40140,"t":"05 58 41 40 00","k":"Sylvia Dupont","e":"sylvia.dupont@soustons.leclerc","lat":43.75165,"lng":-1.32977,"x":false},{"r":"C-00120","n":"ELIKA DENDA","a":"260 KARRIKA NAGUSIA","c":"ESPELETTE","p":64250,"t":"0559206840","k":"HEGOA et EDWIGE","e":"elikaespelette@gmail.com","lat":43.34052,"lng":-1.44798,"x":false},{"r":"C-00040","n":"ELIODOR (ANTTON)","a":"PLACE DU MARCHE","c":"ESPELETTE","p":64250,"t":"05 59 93 80 58","k":"Compta","e":"contact@chocolats-antton.com","lat":43.34052,"lng":-1.44798,"x":false},{"r":"C-00023","n":"EPICERIE-GALERIE BIARRITZ","a":"18 AV DE VERDUN","c":"BIARRITZ","p":64200,"t":"06 83 21 88 48","k":"Carine Verstraeten-Rieux","e":"carine.verstraeten.rieux@gmail.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00141","n":"EPIONE BIO - BEE BIO","a":"670 AVENUE VULCAIN","c":"LA TESTE DE BUCH","p":33260,"t":"05 54 07 03 87","k":"Dominique LEROY","e":"epionebio@gmail.com","lat":44.63278,"lng":-1.14513,"x":false},{"r":"C-00028","n":"ETXEA","a":"LOTISSEMENT ZUBIZABALETA II","c":"ESPELETTE","p":64250,"t":"0559242091","k":"Enrique GERARD","e":"etxea.sas@gmail.com","lat":43.34052,"lng":-1.44798,"x":false},{"r":"C-00004","n":"Euskal Vrak","a":"2 LOT CHARLES CAMI","c":"ST PEE SUR NIVELLE","p":64310,"t":"33559436637","k":"Echeverria Isabelle","e":"euskalvrak@gmail.com","lat":43.35645,"lng":-1.55058,"x":false},{"r":"C-00313","n":"FA1 (FERME ATTITUDE)","a":"23 R. D'ASTORG","c":"TOULOUSE","p":31000,"t":"05 34 33 51 55","k":"MURIEL PORRY","e":"adv@fermeattitude.fr","lat":43.60426,"lng":1.44367,"x":false},{"r":"C-00225","n":"FA2 (FERME ATTITUDE)","a":"4 RUE VILLENEUVE","c":"TOULOUSE","p":31300,"t":"05 34 51 37 51","k":"Muriel Porry","e":"adv@fermeattitude.fr","lat":43.60426,"lng":1.44367,"x":false},{"r":"C-00052","n":"FALTAS - SAM MARKET","a":"16 RUE MONTPENSIER","c":"PAU","p":64000,"t":"0649103160","k":"Karim","e":"sammarket@laposte.net","lat":43.31117,"lng":-0.35583,"x":false},{"r":"C-00337","n":"FARDIS - SUPER U","a":"CENTRE COMMERCIAL VAL LAURENCE","c":"FARGUES ST HILAIRE","p":33370,"t":"0556685402","k":"Sandrine Bautinaud","e":"fardis.factures@gmail.com","lat":44.82383,"lng":-0.44495,"x":false},{"r":"C-00119","n":"Farmily and Co - TEREO","a":"6 RUE ARNAUD DETROYAT","c":"BAYONNE","p":64100,"t":"05 64 11 53 60","k":"Philippe Revel","e":"contact@farmily.fr","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00215","n":"FERM AVENIR","a":"25 RUE DE SOUSPESSE","c":"ST MARTIN DE SEIGNANX","p":40390,"t":"0554810239","k":"Nicolas Clausel","e":"contact@fermavenir.fr","lat":43.54306,"lng":-1.38718,"x":false},{"r":"C-00269","n":"FERM'ENVIE - BIZANOS","a":"3 RUE ROBERT AGEST","c":"BIZANOS","p":64320,"t":"05 59 62 38 11","k":"Jerome Duville","e":"direction@fermenvie.fr","lat":43.28753,"lng":-0.35164,"x":false},{"r":"C-00268","n":"FERM'ENVIE - SERRES CASTET","a":"RUE D ASPE","c":"SERRES CASTET","p":64121,"t":"05 59 80 17 41","k":"Jerome Duville","e":"direction@fermenvie.fr","lat":43.38647,"lng":-0.35497,"x":false},{"r":"C-00029","n":"Ferme Segida","a":"1461 DANTXARINEKO BIDEA","c":"AINHOA","p":64250,"t":"0685699382","k":"Laurence BESSOUAT","e":"boutiksegida@gmail.com","lat":43.318,"lng":-1.4645,"x":false},{"r":"C-00275","n":"FLD 4 - COEUR DE FRAIS LESCAR","a":"115 BD DE L'EUROPE","c":"LESCAR","p":64230,"t":"05 59 35 62 73","k":"","e":"administratiflescar@coeurdefrais.fr","lat":43.33358,"lng":-0.43458,"x":false},{"r":"C-00154","n":"FRANCE ASIA","a":"83 AVENUE DE L' ADOUR","c":"ANGLET","p":64600,"t":"05 59 57 62 57","k":"Paula","e":"anglet.gestion@france-asia.com","lat":43.48921,"lng":-1.51921,"x":false},{"r":"C-00346","n":"FROMOCCITANIE","a":"57 AV. CAMILLE PUJOL","c":"TOULOUSE","p":31500,"t":"06 64 99 79 10","k":"Melanie Baby","e":"fromoccitanie@gmail.com","lat":43.60426,"lng":1.44367,"x":false},{"r":"C-00409","n":"FRONTAL - Intermarché FRONTON","a":"800 ROUTE DE TOULOUSE","c":"FRONTON","p":31620,"t":"0534273700","k":"Thierry MAZERIES","e":"thierry.mazeries-pdv02239@mousquetaires.com","lat":43.83931,"lng":1.38931,"x":false},{"r":"C-00306","n":"Garazi en rose","a":"26 AVENUE RENAUD","c":"ST JEAN PIED DE PORT","p":64220,"t":"06 98 64 07 34","k":"M. Emmanuel Duplaceau","e":"contact@garazienrose.com","lat":43.16473,"lng":-1.23729,"x":false},{"r":"C-00213","n":"Garonnes et fruits - A.C.M. PRIMEUR","a":"30 AV DE LA MARNE","c":"MERIGNAC","p":33700,"t":"05 35 38 61 71","k":"Sylvain Manente","e":"garonneetfruits@gmail.com","lat":44.84247,"lng":-0.64512,"x":false},{"r":"C-00237","n":"Geltoki Sociedad","a":"DENDA GELTOKI.RED","c":"PAMPLONA","p":31002,"t":"+34848 980 037","k":"Ainhoa","e":"DENDA@GELTOKI.RED","lat":42.81687,"lng":-1.64323,"x":false},{"r":"C-00139","n":"GRAIN DE SOLEIL","a":"34 RUE ARNAUD DETROYAT","c":"BAYONNE","p":64100,"t":"05 59 42 10 83","k":"LAURENCE HUMBERT / DELPHINE WATTEAU","e":"achats@graindesoleil.bio","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00347","n":"GRANEL DONOSTIA","a":"Larramendi Kalea, 23,","c":"SAN SEBASTIAN","p":20006,"t":"+34 943 53 08 62","k":"Eva María Rico Ibarra","e":"graneldonostia@gmail.com","lat":43.3183,"lng":-1.9812,"x":false},{"r":"C-00241","n":"Granel Etxea","a":"C. Mercado, s n, puesto 26,","c":"PAMPLONA","p":31001,"t":"+34 681 90 87 39","k":"Alberto ausejo","e":"info@graneletxea.com","lat":42.81687,"lng":-1.64323,"x":false},{"r":"C-00235","n":"Granel Pamplona","a":"C. Calceteros, 10","c":"PAMPLONA","p":31001,"t":"0034 614 156 640","k":"Alberto","e":"al.luna.pereira@gmail.com","lat":42.81687,"lng":-1.64323,"x":false},{"r":"C-00026","n":"GREEN ORGANIC - BIO WAVE","a":"261 AVENUE DES REMOULEURS","c":"SOORTS HOSSEGOR","p":40150,"t":"0554070695","k":"DIDIER ANTY","e":"greenorganic40@gmail.com","lat":43.667,"lng":-1.433,"x":false},{"r":"C-00253","n":"Gurgur \"Delicias de la Estafeta\"","a":"C. de la Estafeta, 21","c":"PAMPLONA","p":31001,"t":"+34 677 71 76 74","k":"Nacho","e":"info@gurgurestafeta.com","lat":42.81687,"lng":-1.64323,"x":false},{"r":"C-00333","n":"HARMONIE DES VIGNES","a":"7 RUE DE FERRETTE","c":"VIEUX FERRETTE","p":68480,"t":"03.89.887085","k":"Vannessa Haegy","e":"contact@harmoniedesvignes.com","lat":47.45,"lng":7.3,"x":false},{"r":"C-00174","n":"HAZIBIO SL","a":"OKOBIO INDUSTRIALDEA 24","c":"BELAUNTZA (GIPUZKOA)","p":20491,"t":"34943548794","k":"Mikel MUNDUATE","e":"admin@hazibio.eus","lat":43.15,"lng":-2.0,"x":false},{"r":"C-00034","n":"HEMENGO","a":"233 RUE DE HIRIBEHERE","c":"USTARITZ","p":64480,"t":"0559579721","k":"Ana","e":"hemengo@wanadoo.fr","lat":43.39991,"lng":-1.45696,"x":false},{"r":"C-00364","n":"HODEIERTZ EKODENDA","a":"Prim Kalea, 20","c":"DONOSTIA","p":20006,"t":"+34 943 47 05 80","k":"Auritz Ansorena","e":"hodeiertz.ekodenda@outlook.es","lat":43.3183,"lng":-1.9812,"x":false},{"r":"C-00261","n":"HORME F&B","a":"6 B RUE DE LA POUDRIERE","c":"LA ROCHE SUR YON","p":85000,"t":"0609453718","k":"Xavier Guillet","e":"xguillet@maison-horme.com","lat":46.66667,"lng":-1.43333,"x":false},{"r":"C-00381","n":"HOTEL RESTAURANT ARRAYA","a":"31 PLAZA","c":"SARE","p":64310,"t":"05 59 54 20 46","k":"Laurence Fagoaga","e":"hotel@arraya.com","lat":43.31267,"lng":-1.58023,"x":false},{"r":"C-00112","n":"Intermarché  St Pée - SENPEREN","a":"ZAC DE LIZARDIA II","c":"ST PEE SUR NIVELLE","p":64310,"t":"0559541061","k":"Pantxika","e":"pdv11162@mousquetaires.com","lat":43.35645,"lng":-1.55058,"x":false},{"r":"C-00218","n":"INTERMARCHE BAYONNE NORD - ASTERIA","a":"RDPT DU GRAND BASQUE","c":"BAYONNE","p":64100,"t":"05 59 55 39 55","k":"Mr Franck BARBIER","e":"Pdv11324@mousquetaires.com","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00050","n":"ISABELLE DEPIOLE - LA HALTE BIO","a":"19 BIS AV. D'ASPE","c":"GAN","p":64290,"t":"09 81 05 96 00","k":"FLORE PIANELLI","e":"lahaltebio64@gmail.com","lat":43.22852,"lng":-0.38713,"x":false},{"r":"C-00123","n":"JACPEG - PANIER DE LUZ","a":"124 AVENUE DE JALDAY","c":"ST JEAN DE LUZ","p":64500,"t":"0559511771","k":"Marilys","e":"jacpeg@outlook.fr","lat":43.38871,"lng":-1.66267,"x":false},{"r":"C-00266","n":"JANARITEGI - NETTO CAMBO","a":"LIEU DIT IMBEDIA, 67 AV. D'ESPAGNE","c":"CAMBO LES BAINS","p":64250,"t":"05 59 55 79 90","k":"Mme Laxague","e":"PDV06037@mousquetaires.com","lat":43.35798,"lng":-1.40174,"x":false},{"r":"C-00147","n":"JARDIN DES THES","a":"2 RUE DES AUBEPINES","c":"HENDAYE","p":64700,"t":"05 59 20 48 77","k":"Evelyne Michelena","e":"evelyne64122@hotmail.fr","lat":43.35809,"lng":-1.7744,"x":false},{"r":"C-00124","n":"JARDINERIE LAFITTE","a":"AV DU 8 MAI 1945","c":"BAYONNE","p":64100,"t":"0559422442","k":"VERONIQUE LARRE","e":"jardinerie@lafitte.net","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00406","n":"JOTYS - Intermarché Express Toulouse Bonnefoy","a":"25 RUE DU FAUBOURG BONNEFOY","c":"TOULOUSE","p":31500,"t":"0534254300","k":"Ludovic BELLUT","e":"pdv10923@mousquetaires.com","lat":43.60426,"lng":1.44367,"x":false},{"r":"C-00222","n":"Kathy Thion","a":"P.O.Box 4161","c":"ST LUCIA SOUTH QUEENSLAND 40","p":4067,"t":"61415880830","k":"","e":"othion@bigpond.com","lat":-27.4975,"lng":153.014,"x":false},{"r":"C-00133","n":"Komedia","a":"10, CHEMIN D'OLHONCE","c":"ST JEAN PIED DE PORT","p":64220,"t":"0644780471","k":"Stéphanie Mariaccia","e":"komedia64@gmail.com","lat":43.16473,"lng":-1.23729,"x":false},{"r":"C-00375","n":"KRESALA","a":"Jardines K. 2 Ibaiondo","c":"BILBAO","p":48005,"t":"34946093825","k":"","e":"biokresala@gmail.com","lat":43.26271,"lng":-2.92528,"x":false},{"r":"C-00053","n":"KUSINAK - KINKA RESTAURANT","a":"684 RUE DE ERROTA BERRIA","c":"ST PEE SUR NIVELLE","p":64310,"t":"06 99 87 51 10","k":"Annie BOULANGER","e":"restaurant@kinka.eus","lat":43.35645,"lng":-1.55058,"x":false},{"r":"C-00220","n":"L ATELIER BOUCHERIE","a":"671 AV. PIERRE BENOIT","c":"ST PAUL LES DAX","p":40990,"t":"05 58 73 85 23","k":"Alexandra","e":"latelierboucherie@gmail.com","lat":43.72566,"lng":-1.05283,"x":false},{"r":"C-00223","n":"L'AUBERGE","a":"380 RUE ABBE - BORDES","c":"GAMARDE LES BAINS","p":40380,"t":"0558986227","k":"Mme Quitterie Camjouan","e":"hotel-gamarde@orange.fr","lat":43.75,"lng":-0.85,"x":false},{"r":"C-00354","n":"L'EAU VIVE PAU BIZANOS - VIDISBIO","a":"47 RTE DE TARBES","c":"BIZANOS","p":64320,"t":"09 67 48 69 57","k":"FRANCK","e":"directionleauvivepau@gmail.com","lat":43.28753,"lng":-0.35164,"x":false},{"r":"C-00021","n":"L'EPICERIE BIOLOGIQUE","a":"7 RUE DU JEU DE PAUME","c":"ST PALAIS","p":64120,"t":"05 59 38 96 51","k":"Maite James","e":"maitejamesbio@gmail.com","lat":43.32828,"lng":-1.03397,"x":false},{"r":"C-00246","n":"L'EPICERIE DE VINCENT","a":"LOT. MOUGUERRE VILLAGE","c":"MOUGUERRE","p":64990,"t":"05 59 59 29 84","k":"Vincent Robert","e":"epicerie.vincent@yahoo.fr","lat":43.46874,"lng":-1.41655,"x":false},{"r":"C-00018","n":"L'Epicerie fermière Euskal Herri","a":"BIDE ARTE 2 RTE DEPARTEMENTALE 810","c":"URRUGNE","p":64122,"t":"0682222351","k":"Josie Ducousso","e":"gustoki@gustoki.eus","lat":43.36243,"lng":-1.70019,"x":false},{"r":"C-00100","n":"L'EPICERIE FINE DE ANGELIS CAVE A VIN","a":"54 AV ROBERT LABEYRIE","c":"PONTONX SUR L ADOUR","p":40465,"t":"05 58 98 80 51","k":"NADEGE CAMJOUAN","e":"nadege.de-angelis@hotmail.fr","lat":43.78783,"lng":-0.92508,"x":false},{"r":"C-00307","n":"L'EPICERIE VERTE - LCB PAU VERTE","a":"132 AV. ALFRED NOBEL","c":"PAU","p":64000,"t":"0559402435","k":"Adrien","e":"lcb.nobel.direction@outlook.com","lat":43.31117,"lng":-0.35583,"x":false},{"r":"C-00310","n":"L'EPICERIE VERTE- LCB LONS","a":"1 RUE PIERRE-GILLES DE GENNES","c":"LONS","p":64140,"t":"0552327036","k":"Tony","e":"lcb.lons@lescomptoirsdelabio.fr","lat":43.31505,"lng":-0.41105,"x":false},{"r":"C-00356","n":"L'esprit vigneron Soussac","a":"25 LE BOURG","c":"SOUSSAC","p":33790,"t":"05 57 28 30 75","k":"Alexandra Smith","e":"syndicat.soussac@gmail.com","lat":44.72,"lng":-0.06,"x":false},{"r":"C-00030","n":"la BIOteka - BIDASOA BIO SL","a":"Iparralde Hiribidea, 1","c":"IRUN","p":20302,"t":"0034667406763","k":"OSCAR","e":"oscar@bioteka.es","lat":43.33904,"lng":-1.78938,"x":false},{"r":"C-00345","n":"La Brigade de Véro","a":"1340 RUE DE PINVILLE","c":"MONTPELLIER","p":34000,"t":"06 76 99 34 45","k":"GOTILLOT Alban","e":"alban.gotillot@labrigadedevero.com","lat":43.61092,"lng":3.87723,"x":false},{"r":"C-00130","n":"La cave des gourmets - Vins et délices","a":"12 RUE DU THEATRE","c":"MIMIZAN","p":40200,"t":"0558092487","k":"Dominique MINVIELLE","e":"lacavedesgourmets@gmail.com","lat":44.20135,"lng":-1.22873,"x":false},{"r":"C-00378","n":"LA COMMUNAUTE DE LA BIO - biocoop talence","a":"540 CR DE LA LIBERATION","c":"TALENCE","p":33400,"t":"05 57 96 94 64","k":"Alexandre","e":"biocoop.talence@orange.fr","lat":44.80849,"lng":-0.58915,"x":false},{"r":"C-00051","n":"LA CORBEILLE D OR","a":"40 PL MARCADIEU","c":"TARBES","p":65000,"t":"0562346563","k":"François ALFIERI","e":"francois.alfieri@gmail.com","lat":43.23333,"lng":0.08333,"x":false},{"r":"C-00311","n":"LA HALLE DE GRADIGNAN","a":"2 AVENUE FAVARD","c":"GRADIGNAN","p":33170,"t":"05 56 91 78 64","k":"Marion Dufour","e":"Julap33@yahoo.com","lat":44.77362,"lng":-0.61395,"x":false},{"r":"C-00342","n":"LA HALLE DE L ALOUETTE","a":"10 RUE LEON MORIN","c":"PESSAC","p":33600,"t":"05 56 36 05 80","k":"Marion Dufour","e":"Julap33@yahoo.com","lat":44.80565,"lng":-0.6324,"x":false},{"r":"C-00312","n":"LA HALLE DE PESSAC","a":"43 AV. JEAN JAURES","c":"PESSAC","p":33600,"t":"05 56 45 55 39","k":"Marion Dufour","e":"Julap33@yahoo.com","lat":44.80565,"lng":-0.6324,"x":false},{"r":"C-00206","n":"LA PALETTE DES VINS","a":"53 RTE DE PITOYS","c":"ANGLET","p":64600,"t":"N/A","k":"Mickael BEHASTEGUY","e":"contact@lapalettedesvins.com","lat":43.48921,"lng":-1.51921,"x":false},{"r":"C-00084","n":"LA PETITE BOUCHERIE","a":"6 RUE ROBERT DUBAA","c":"MAGESCQ","p":40140,"t":"05 58 97 13 77","k":"Florence Mileriou","e":"lapetiteboucheriemagescq@gmail.com","lat":43.77948,"lng":-1.2174,"x":false},{"r":"C-00407","n":"LA RESERVE BIO","a":"280 ROUTE DE CONSTANTINE","c":"MEES","p":40990,"t":"06 73 95 48 85","k":"Anselme Louise","e":"contact@lareservebio-so.com","lat":43.70388,"lng":-1.10987,"x":false},{"r":"C-00288","n":"LAITERIE DE LA NIVE","a":"26 IMP. LARRE XOLA","c":"ST JEAN LE VIEUX","p":64220,"t":"06 30 37 59 07","k":"Camille Lauzet","e":"contact@laiteriedelanive.fr","lat":43.1685,"lng":-1.227,"x":true},{"r":"C-00373","n":"LAKARI","a":"Araba Kalea 33","c":"ZARAUTZ","p":20800,"t":"+34 618 560 247","k":"Izaskun","e":"denda@lakari.eus","lat":43.28444,"lng":-2.16992,"x":false},{"r":"C-00379","n":"LAKET BIO S.L.L.","a":"Poligono Merkatondoa 34 nave 15","c":"LIZARRA ESTELLA","p":31200,"t":"+34 676 461 951","k":"Kepa","e":"kepa@laket.com","lat":42.671,"lng":-2.032,"x":false},{"r":"C-00251","n":"LANDSCAPE-INSTANT TRAITEUR","a":"ZA DE MAIGNON, 10 RTE DE PITOYS","c":"ANGLET","p":64600,"t":"05 59 43 81 99","k":"Gaetan","e":"contact@linstantraiteur.com","lat":43.48921,"lng":-1.51921,"x":false},{"r":"C-00399","n":"LANGUEDOC FRUITS ET LEGUMES - LA CHARRETTE","a":"62 RUE DU FAUBOURG BOUTONNET","c":"MONTPELLIER","p":34090,"t":"06 10 03 90 38","k":"BOUBAKAR MARMI","e":"marbi.b@hotmail.fr","lat":43.61092,"lng":3.87723,"x":false},{"r":"C-00321","n":"LAURHIBAR - INTERMARCHE ISPOURE","a":"D933","c":"ISPOURE","p":64220,"t":"05 59 37 18 08","k":"SEBASTIEN FARISCO","e":"Pdv11595@mousquetaires.com","lat":43.163,"lng":-1.234,"x":false},{"r":"C-00074","n":"LCB JUILLAN - LES COMPTOIRS DE LA BIO","a":"11 T RTE DE LOURDES","c":"JUILLAN","p":65290,"t":"07 66 64 94 96","k":"Anael","e":"comptoirs.bio.juillan@gmail.com","lat":43.19937,"lng":0.0257,"x":false},{"r":"C-00081","n":"LCB OLORON - LES COMPTOIRS DE LA BIO","a":"3 AV SAINT CRICQ","c":"OLORON STE MARIE","p":64400,"t":"0559396523","k":"Alexandre Dubos","e":"comptoirs.bio.oloron@gmail.com","lat":43.19441,"lng":-0.61069,"x":false},{"r":"C-00285","n":"LE COMPTOIR DU PECHEUR","a":"PORT DE LARRALDENIA","c":"CIBOURE","p":64500,"t":"","k":"Jean Baptiste","e":"achat@lecomptoirdupecheur.fr","lat":43.38488,"lng":-1.66817,"x":false},{"r":"C-00216","n":"LE DEPANNEUR DU COIN","a":"43 RUE LEVIEUX","c":"BORDEAUX","p":33000,"t":"06 88 29 32 84","k":"ANAIS CAVERNES","e":"ledepanneurducoin33@gmail.com","lat":44.84044,"lng":-0.5805,"x":false},{"r":"C-00393","n":"LE HANGAR FERMIER","a":"1048 ROUTE DE LESGOR","c":"PONTONX SUR L ADOUR","p":40465,"t":"07 70 07 94 39","k":"Mélodie","e":"contact@lehangarfermier.fr","lat":43.78783,"lng":-0.92508,"x":false},{"r":"C-00046","n":"Le Pain Fagoa","a":"3 RUE DU BOIS BELIN","c":"ANGLET","p":64600,"t":"0559034767","k":"Magali Chevallier","e":"lepain.fagoa@hotmail.fr","lat":43.48921,"lng":-1.51921,"x":false},{"r":"C-00049","n":"LE PANIER D'ABONDANCE","a":"6 BD NOTRE DAME","c":"CAPBRETON","p":40130,"t":"0672757113","k":"Véronique Saumon","e":"v.saumon@orange.fr","lat":43.64238,"lng":-1.43123,"x":false},{"r":"C-00323","n":"LE PANIER VERT","a":"CENTRE COMMERCIAL MONTESQUIEU","c":"MERIGNAC","p":33700,"t":"06 11 68 89 82","k":"HAJEM Yacine","e":"lepaniervert33@gmail.com","lat":44.84247,"lng":-0.64512,"x":false},{"r":"C-00257","n":"LE PETIT CAP","a":"20 RUE DU GENERAL DE GAULLE","c":"","p":40130,"t":"N/A","k":"MAGDA JAEN","e":"jaen.laurent@wanadoo.fr","lat":43.6425,"lng":-1.4306,"x":true},{"r":"C-00137","n":"LECLERC BIARRITZ - La Négresse Distribution","a":"1, RUE DES HIRONDELLES","c":"BIARRITZ","p":64200,"t":"05 59 08 04 30","k":"Stephanie Orcaray@biarritz.leclerc","e":"stephanie.orcaray@biarritz.leclerc","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00221","n":"LECLERC HASPARREN - Hasparren Distribution","a":"ROUTE D'ELIZABERRI","c":"HASPARREN","p":64240,"t":"05 59 48 41 40","k":"GEOFFREY ¨PLUQUET","e":"Geoffrey.Pluquet@bayonne.leclerc","lat":43.38394,"lng":-1.30523,"x":false},{"r":"C-00320","n":"LES AMIS DES PRODUCTEURS ETHIQUES LONGCHAMP (AU BOUT DU CHAMP)","a":"38 RUE LEPIC","c":"PARIS","p":75018,"t":"N/A","k":"Elsa Martineau","e":"elsa@auboutduchamp.com","lat":48.85341,"lng":2.3488,"x":false},{"r":"C-00244","n":"Les Bios du Bassin","a":"98 CR DE VERDUN","c":"GUJAN MESTRAS","p":33470,"t":"05 56 54 81 58","k":"Christophe","e":"quero.christophe@orange.fr","lat":44.636,"lng":-1.06815,"x":false},{"r":"C-00383","n":"LES BRAU (L'EPICERIE DES FRANGINES)","a":"2 RUE DU COMMERCE","c":"MONEIN","p":64360,"t":"0687147710","k":"Eva et Amélie BRAU","e":"contact@epiceriedesfrangines.fr","lat":43.32049,"lng":-0.57975,"x":false},{"r":"C-00136","n":"Les Comptoirs de la Bio Soustons - JMHBIO","a":"26 ZONE ARTISANALE","c":"SOUSTONS","p":40140,"t":"05 58 42 23 80","k":"Mélodie Monnier","e":"comptoirsbiosoustons@gmail.com","lat":43.75165,"lng":-1.32977,"x":false},{"r":"C-00199","n":"LES DELICES BASQUES - DEVILOO","a":"39 ALLEE GOXOKI MAISON 3","c":"ST PEE SUR NIVELLE","p":64310,"t":"06 95 70 64 86","k":"Guillaume LALOO","e":"contact@lesdelicesbasques.com","lat":43.35645,"lng":-1.55058,"x":false},{"r":"C-00146","n":"LES FROMAGES DE FLORE","a":"HALLES MUNICIPALE","c":"HOSSEGOR","p":40150,"t":"0628209721","k":"Aurélie","e":"aureliedarrieux@neuf.fr","lat":43.667,"lng":-1.433,"x":false},{"r":"C-00086","n":"LES JARDINS DE LA NIVE","a":"3 RUE PANNECAU","c":"BAYONNE","p":64100,"t":"0620430869","k":"Laurent Bounet","e":"lesjardinsdelanive@gmail.com","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00281","n":"LES JARDINS DE TYROSSE - BIOCOOP","a":"32 AV DE TERREBLANQUE","c":"ST VINCENT DE TYROSSE","p":40230,"t":"05 58 77 12 59","k":"Patrice","e":"sectyrosse@biocooplesjardins.fr","lat":43.66071,"lng":-1.30428,"x":false},{"r":"C-00131","n":"LES TAREES DU VRAC","a":"21 RUE DE LA CONCORDE","c":"TOULOUSE","p":31000,"t":"06 87 59 27 58","k":"Mélanie Chauvin","e":"epicerievractoulouse@gmail.com","lat":43.60426,"lng":1.44367,"x":false},{"r":"C-00283","n":"LUR BERRI JARDINERIES - Gamm vert SJDL","a":"JALDAY","c":"ST JEAN DE LUZ","p":64500,"t":"05 59 26 09 35","k":"Emilie","e":"i.lacabe@lurberri.fr","lat":43.38871,"lng":-1.66267,"x":false},{"r":"C-00038","n":"LURRA BIO DENDA","a":"4 GASKOINA KARRIKA","c":"HASPARREN","p":64240,"t":"0559293068","k":"Jon Oyhenart","e":"lurra@orange.fr","lat":43.38394,"lng":-1.30523,"x":false},{"r":"C-00258","n":"MAIDER & CO- LORIO","a":"382 KARRIKA NAGUSIA","c":"AINHOA","p":64250,"t":"06 87 10 89 93","k":"Myriam Peltant","e":"myriam.peltant@orange.fr","lat":43.318,"lng":-1.4645,"x":false},{"r":"C-00037","n":"MAIDER ET ALAIN","a":"LARRE LORE","c":"ASCAIN","p":64310,"t":"0559265644","k":"Alain Larronde et maider martierena","e":"maideretalain@gmail.com","lat":43.34595,"lng":-1.62118,"x":false},{"r":"C-00186","n":"Maison Argaud","a":"1 CHEMIN DE L'ESPERENCE","c":"BELLOCQ","p":64270,"t":"0559651351","k":"Paul argaud","e":"compta@maisonargaud.com","lat":43.466,"lng":-0.883,"x":false},{"r":"C-00156","n":"Maison des Vins","a":"18 PLACE DE L'EGLISE","c":"BOURGUEIL","p":37140,"t":"02 47 97 92 20","k":"Marie Belda","e":"mdvbourgueil@gmail.com","lat":47.28333,"lng":0.16612,"x":false},{"r":"C-00397","n":"MAISON GASTELLOU - BOUCHERIE CHARCUTERIE BASQUAISE SARL","a":"QUARTIER LA MAGDELEINE RD 933","c":"ST JEAN LE VIEUX","p":64220,"t":"05 59 37 27 00","k":"Annie Gastellou","e":"maisongastellou.etxea@gmail.com","lat":43.1685,"lng":-1.227,"x":true},{"r":"C-00282","n":"MAISON MAYTE","a":"ROUTE DE BOURG","c":"ST JEAN LE VIEUX","p":64220,"t":"05 59 37 10 02","k":"Sylvie","e":"direction@charcuterie-mayte.com","lat":43.1685,"lng":-1.227,"x":true},{"r":"C-00122","n":"MAISON RODELLIER - Crèmerie Des Docks","a":"44 RUE LUIS MARIANO","c":"BIARRITZ","p":64200,"t":"0680758865","k":"Alexandre Cellier","e":"cremeriedesdocks@gmail.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00325","n":"MARGALIDE - Intermarché SUPER Jurançon","a":"25 RUE OLLE LAPRUNE","c":"JURANCON","p":64110,"t":"05 59 06 01 10","k":"Céline","e":"pdv06324@mousquetaires.com","lat":43.2883,"lng":-0.38694,"x":false},{"r":"C-00240","n":"Marian Janaridenda","a":"Matxin Arzu Kalea, 1","c":"HONDARRIBIA","p":20280,"t":"+34 943 64 20 72","k":"Maria Angeles","e":"marian.janaridenda73@gmail.com","lat":43.36859,"lng":-1.79622,"x":false},{"r":"C-00171","n":"MARIUS - Le jardin des Alpilles","a":"ZAC DU ROUBIAN","c":"TARASCON","p":13150,"t":"0786962980","k":"Florence KAISSIS","e":"achats.jardin.alpilles@gmail.com","lat":43.80583,"lng":4.66028,"x":false},{"r":"C-00068","n":"Marketing Snack & Moi","a":"191, CHEMIN D'IHINTZIA","c":"ST PEE SUR NIVELLE","p":64310,"t":"0686083815","k":"Laurent Desmarest","e":"l.desmarest@snack-et-moi.fr","lat":43.35645,"lng":-1.55058,"x":false},{"r":"C-00271","n":"MAVI - COTE FERME TOURNEFEUILLE","a":"5 CHEM. DE BORDENEUVE","c":"TOURNEFEUILLE","p":31170,"t":"05 61 16 54 89","k":"Nadine ROUANE","e":"mavi-tournefeuille@orange.fr","lat":43.58872,"lng":1.31922,"x":false},{"r":"C-00326","n":"MD PRIMEURS PYRENEES","a":"145 AV. JEAN MERMOZ","c":"BILLERE","p":64140,"t":"05 59 32 33 27","k":"Marie-Andrée SENOSIAIN","e":"carri.mdprimeurs@sfr.fr","lat":43.30264,"lng":-0.39733,"x":false},{"r":"C-00015","n":"MERYL EN VRAC - DAY BY DAY BIARRITZ","a":"44 RUE LUIS MARIANO","c":"BIARRITZ","p":64200,"t":"0648697680","k":"Meryl Kraus","e":"daybyday.biarritz@gmail.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00286","n":"MILLAU FRUITS ET LEGUMES & FILS","a":"53 BD DES CIGALLES","c":"CAPBRETON","p":40130,"t":"05 58 97 50 24","k":"Guillaume Millau","e":"millaufruitetlegume@gmail.com","lat":43.64238,"lng":-1.43123,"x":false},{"r":"C-00118","n":"MONTESPAL - Intermarché SUPER Boucau","a":"4 RUE PIERRE LACOUTURE","c":"BOUCAU","p":64340,"t":"05 59 64 91 20","k":"Emelyne","e":"pdv11891@mousquetaires.com","lat":43.5277,"lng":-1.46556,"x":false},{"r":"C-00402","n":"MUNDT Corentin","a":"18 IMPASSE DU PIVOULET","c":"LAUNAGUET","p":31140,"t":"06 80 67 52 53","k":"","e":"corentin.mundt.merch@gmail.com","lat":43.67818,"lng":1.45603,"x":false},{"r":"C-00389","n":"NADEGE ALLOATTI","a":"2 RUE ELISSACILLO RESIDENCE HIRABOURE","c":"HENDAYE","p":64700,"t":"0659573910","k":"MADAME NADEGE ALLOATTI","e":"contact@zechauffeur.com","lat":43.35809,"lng":-1.7744,"x":false},{"r":"C-00020","n":"NATURALA","a":"37 RUE DES TERRASSES","c":"CAMBO LES BAINS","p":64250,"t":"0667620520","k":"Nathalie BRAS","e":"naturala@sfr.fr","lat":43.35798,"lng":-1.40174,"x":false},{"r":"C-00203","n":"O PANIER LOCAL","a":"8 PLACE DE LA POUSTELLE","c":"ORTHEZ","p":64300,"t":"0547730667","k":"Isabelle Drivon","e":"magasin@o-panier-local.fr","lat":43.48834,"lng":-0.77266,"x":false},{"r":"C-00297","n":"OLORON PRIMEUR","a":"19 BD DE L'ARAGON","c":"OLORON STE MARIE","p":64400,"t":"06 27 74 78 16","k":"Carlos Pedro","e":"Oloprimeur@gmail.com","lat":43.19441,"lng":-0.61069,"x":false},{"r":"C-00242","n":"ONA DA - Joan Lartigau","a":"6 RUE EMILE ZOLA","c":"LE BOUSCAT","p":33110,"t":"05 57 29 63 31","k":"Joan Lartigau","e":"contact@joan-lartigau.fr","lat":44.86488,"lng":-0.59864,"x":false},{"r":"C-00043","n":"Onatabio","a":"KARRIKA NAGUSIA","c":"ITXASSOU","p":64250,"t":"0559938564","k":"Uthurry Chantal","e":"onatabio@gmail.com","lat":43.32959,"lng":-1.4055,"x":false},{"r":"C-00019","n":"ONENA LA FERME ELIZALDIA","a":"125 AVENUE ANDRE ITHURRALDE","c":"SAINT-JEAN-DE-LUZ","p":64500,"t":"0681739993","k":"Yohan Mendy","e":"merkatua@elizaldia.com","lat":43.38871,"lng":-1.66267,"x":false},{"r":"C-00098","n":"ORGANIKOA - LES COMPTOIRS DE LA BIO ST PEE SUR NIVELLE","a":"BATIMENT B","c":"ST PEE SUR NIVELLE","p":64310,"t":"05 59 43 16 78","k":"Eric Le Poul","e":"comptoirsdelabiosaintpee@gmail.com","lat":43.35645,"lng":-1.55058,"x":false},{"r":"C-00394","n":"ORIGINAL BALI BOWLS","a":"4 RUE GASTON LARRE","c":"BIARRITZ","p":64200,"t":"0651982464","k":"Catherine Bouteiller","e":"Catherinebo64@gmail.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00017","n":"ORONOZ - SPAR SARE","a":"BOURG PARKING LUR BERRI","c":"SARE","p":64310,"t":"0559419460","k":"Oihana ORONOZ","e":"spar.sare@outlook.fr","lat":43.31267,"lng":-1.58023,"x":false},{"r":"C-00348","n":"OSTAU DI PASTA","a":"200 GRAND RUE","c":"LEON","p":40550,"t":"0624131733","k":"Margaux VITALI","e":"margauxvitali@outlook.fr","lat":43.87752,"lng":-1.30309,"x":false},{"r":"C-00278","n":"PAPACHOLA - BLOOM BIARRITZ","a":"HALLES CENTRALES","c":"BIARRITZ","p":64200,"t":"06 79 11 56 48","k":"Mathieu Raymond","e":"bloom.biarritz@gmail.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00060","n":"PASCAL MASSONDE ESPELETTE","a":"350 KARRIKA NAGUSIA","c":"ESPELETTE","p":64250,"t":"0554030330","k":"Pantxika Ithurria","e":"facture@pascal-massonde.fr","lat":43.34052,"lng":-1.44798,"x":false},{"r":"C-00059","n":"PASCAL MASSONDE ST JEAN DE LUZ","a":"40 RUE LEON GAMBETTA","c":"ST JEAN DE LUZ","p":64500,"t":"0547759599","k":"","e":"facture@pascal-massonde.fr","lat":43.38871,"lng":-1.66267,"x":false},{"r":"C-00208","n":"PASSION PRIMEUR - halles des minimes","a":"77 BIS AV DES MINIMES","c":"TOULOUSE","p":31200,"t":"05 61 21 50 76","k":"MOHAMMED TOUIL","e":"passionprimeur4@gmail.com","lat":43.60426,"lng":1.44367,"x":false},{"r":"C-00096","n":"Pau Gourmand - BIRABEN","a":"12 RUE BONADO","c":"PAU","p":64000,"t":"0559270895","k":"","e":"biraben@biraben.fr","lat":43.31117,"lng":-0.35583,"x":false},{"r":"C-00108","n":"PAU GOURMAND LONS","a":"11 AV. MARCEL DASSAULT","c":"LONS","p":64140,"t":"05 59 04 11 69","k":"Me Biraben","e":"biraben@biraben.fr","lat":43.31505,"lng":-0.41105,"x":false},{"r":"C-00153","n":"PAYS BASQUE DISTRIBUTION - E LECLERC URRUGNE","a":"RN 10","c":"URRUGNE","p":64122,"t":"0559476922","k":"Blandine Vaque","e":"blandine.vaque@urrugne.leclerc","lat":43.36243,"lng":-1.70019,"x":false},{"r":"C-00079","n":"PIARRES","a":"9 PLACE DE LA REPUBLIQUE","c":"HENDAYE","p":64700,"t":"0684966309","k":"PIERRE DEROGNARD","e":"piarres64@orange.fr","lat":43.35809,"lng":-1.7744,"x":false},{"r":"C-00234","n":"Pixuke- Elizondo","a":"Menditurri, 1","c":"ELIZONDO","p":31700,"t":"0034 624 268 364","k":"","e":"pixukedenda@gmail.com","lat":43.146,"lng":-1.505,"x":false},{"r":"C-00016","n":"PLAZAN","a":"4 PLACE BERRIA FRONTON PANPI LADUCHE","c":"ASCAIN","p":64310,"t":"0603848352","k":"","e":"maider.plazan@gmail.com","lat":43.34595,"lng":-1.62118,"x":false},{"r":"C-00405","n":"PRAUCAM -  U EXPRESS","a":"105 ROUTE DE FRONTON","c":"AUCAMVILLE","p":31140,"t":"0532993131","k":"Olivier Schwartz","e":"olivier.schwartz@coorperative-u.fr","lat":43.6702,"lng":1.42808,"x":false},{"r":"C-00277","n":"PROXI BAIONA - CARREFOUR MARINADOUR","a":"26 BD DU BAB","c":"BAYONNE","p":64100,"t":"05 59 45 70 32","k":"Cyril Guiard","e":"cyril_guiard@franchise.carrefour.com","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00107","n":"PYRENEES GOURMANDES","a":"24 RUE DE L'INDUSTRIE","c":"COARRAZE","p":64800,"t":"05 59 13 98 44","k":"Me Biraben","e":"biraben@biraben.fr","lat":43.16996,"lng":-0.22998,"x":false},{"r":"C-00087","n":"PYRENISSIME - EPICERIE GOURMANDE - ERIC FAZEUILLE","a":"3, RUE HENRY IV","c":"PAU","p":64000,"t":"0610400496","k":"ERIC FAZEUILLE","e":"ericfazeuille64@gmail.com","lat":43.31117,"lng":-0.35583,"x":false},{"r":"C-00374","n":"QUERIDO PLANETA","a":"Erronda Kalea 33 Ibaiondo","c":"BILBAO","p":48005,"t":"+34 667 482 283","k":"Soledad Ibanez Cano","e":"queridoplanetabio@gmail.com","lat":43.26271,"lng":-2.92528,"x":false},{"r":"C-00075","n":"Radié - C FALLIERO - LES COMPTOIRS DE LA BIO TARBES","a":"1 IMPASSE PERTHUIS","c":"TARBES","p":65000,"t":"05 62 34 07 14","k":"Christèle","e":"comptoirs.bio.tarbes@gmail.com","lat":43.23333,"lng":0.08333,"x":false},{"r":"C-00083","n":"RADIE- LCB MERMOZ (LES COMPTOIRS DE LA BIO) PAU 2","a":"163 AV JEAN MERMOZ","c":"LONS","p":64140,"t":"0559601700","k":"Nicolas","e":"comptoirs.bio.mermoz@gmail.com","lat":43.31505,"lng":-0.41105,"x":false},{"r":"C-00089","n":"RADIE- LCB NOBEL - LES COMPTOIRS DE LA BIO","a":"132 AV ALFRED NOBEL","c":"PAU","p":64000,"t":"0559402435","k":"Romain","e":"comptoirs.bio.nobel@gmail.com","lat":43.31117,"lng":-0.35583,"x":false},{"r":"C-00082","n":"RADIE-LCB LONS - LES COMPTOIRS DE LA BIO","a":"1 RUE PIERRE GILLES DE GENNES","c":"LONS","p":64140,"t":"0559327036","k":"Tony","e":"comptoirs.bio.lons@gmail.com","lat":43.31505,"lng":-0.41105,"x":false},{"r":"C-00401","n":"RANDERA IBRAHIM ISSOP","a":"2 BIS RUE CAMP JACQUOT APPT 5 RESIDENCE MARCO POLO","c":"ST DENIS","p":97400,"t":"262692356818","k":"","e":"randera@siteprofree.email","lat":48.93564,"lng":2.35387,"x":false},{"r":"C-00127","n":"RESTAURANT LES ROSEAUX","a":"ROUTE DE BOURMONT","c":"SEIGNOSSE","p":40510,"t":"0558728030","k":"Christophe Lesbats","e":"restaurantlesroseaux@wanadoo.fr","lat":43.6894,"lng":-1.37328,"x":false},{"r":"C-00255","n":"RIP CURL EUROPE","a":"407 AVENUE DE LA TUILERIE","c":"","p":40150,"t":"0611935362","k":"juliette","e":"juliette.boiteux@ripcurl.com","lat":43.6667,"lng":-1.4333,"x":true},{"r":"C-00256","n":"RIP CURL EUROPE","a":"407 AVENUE DE LA TUILERIE","c":"","p":40150,"t":"0611935362","k":"pascale kaiser","e":"pascale.kaiser@kmdbrands.com","lat":43.6667,"lng":-1.4333,"x":true},{"r":"C-00328","n":"SAFF SOC D'AFFINAGE DES FROMAGES DE FRANCE","a":"6 RUE DE LILLE PLA 105 BATIMENT D4","c":"RUNGIS CEDEX","p":94587,"t":"01 46 86 09 68","k":"Donovan","e":"fournisseur@saff-rungis.fr","lat":48.75,"lng":2.35,"x":false},{"r":"C-00014","n":"SALLABERRIA","a":"153 TRINKETEKO KARRIKA","c":"LOUHOSSOA","p":64250,"t":"0675091628","k":"","e":"contact@lavignac.com","lat":43.325,"lng":-1.279,"x":false},{"r":"C-00101","n":"SALON CYRANO","a":"17 BD DES TERRASSES","c":"CAMBO LES BAINS","p":64250,"t":"06 22 94 51 63","k":"Catherine FLAMBARD","e":"cathy.flambard@gmail.com","lat":43.35798,"lng":-1.40174,"x":false},{"r":"C-00093","n":"Sandra Sendas","a":"4 PL DU BAYAA","c":"SALIES DE BEARN","p":64270,"t":"0629865071","k":"Sandra Sendas","e":"sendassandra@gmail.com","lat":43.47422,"lng":-0.92448,"x":false},{"r":"C-00350","n":"Sanoki Ostatua","a":"calle behitiko, 255,","c":"ZUGARRAMURDI","p":31710,"t":"06 74 94 98 97","k":"Evelyne Errandonea","e":"errandoneaevelyne@gmail.com","lat":43.26964,"lng":-1.54113,"x":false},{"r":"C-00209","n":"SARA KORRIKA","a":"8 PLAZA","c":"SARE","p":64310,"t":"0676405858","k":"Jonathan Jules","e":"club@sarakorrika.com","lat":43.31267,"lng":-1.58023,"x":false},{"r":"C-00115","n":"SARDINE - BONJOUR MAURICE","a":"19 QUAI MAURICE RAVEL","c":"CIBOURE","p":64500,"t":"07 84 93 77 43","k":"Veronique POULOU","e":"bonjour@epiceriesardine.com","lat":43.38488,"lng":-1.66817,"x":false},{"r":"C-00025","n":"SARL ARC EN CIEL (CASA-BIO)","a":"28 BOULEVARD DES POMMES","c":"ORTHEZ","p":64300,"t":"05 59 69 28 86","k":"HEUGA Caroline","e":"casabio.orthez@gmail.com","lat":43.48834,"lng":-0.77266,"x":false},{"r":"C-00252","n":"SARL ARNABAR","a":"RTE DEPARTEMENTALE 918 ZA IHORODQUI","c":"OSSES","p":64780,"t":"05 59 37 62 93","k":"","e":"magasin@arnabar.com","lat":43.245,"lng":-1.3,"x":false},{"r":"C-00315","n":"SAS BOUCHET - La Souris Gourmande","a":"5 R. DES MARTYRS","c":"PARIS","p":75009,"t":"01 42 85 43 56","k":"Allan Derain","e":"derainallan94410@gmail.com","lat":48.85341,"lng":2.3488,"x":false},{"r":"C-00183","n":"SAS DLM - Vival Arcangues","a":"383 ROUTE DU TRINQUET","c":"ARCANGUES","p":64200,"t":"0623259065","k":"Marianne","e":"vivalarcangues64200@gmail.com","lat":43.43684,"lng":-1.52138,"x":false},{"r":"C-00303","n":"SAS DRIMABIO - COMPTOIRS DE LA BIO TARBES","a":"1 IMPASSE DU PERTHUIS","c":"TARBES","p":65000,"t":"05 62 31 76 08","k":"Melodie","e":"batiston.comptoirsbio@gmail.com","lat":43.23333,"lng":0.08333,"x":false},{"r":"C-00117","n":"SAS THEGADIS - E.LECLERC ANGLET LE BUSQUET","a":"77 AV DE BAYONNE","c":"ANGLET","p":64600,"t":"05 59 52 54 00","k":"Nicolas Faure","e":"nicolas.faure@anglet-le-busquet.leclerc","lat":43.48921,"lng":-1.51921,"x":false},{"r":"C-00066","n":"SAVA CUISINER","a":"80 RUE DE L EUROPE","c":"ST MARTIN DE HINX","p":40390,"t":"0688719411","k":"Virginie Lannegrand","e":"sava_cuisiner@orange.fr","lat":43.58171,"lng":-1.2709,"x":false},{"r":"C-00369","n":"SCORA SPAR VIEUX BOUCAU","a":"LES, PL. DES TAMARIS","c":"VIEUX BOUCAU LES BAINS","p":40480,"t":"05 58 48 10 98","k":"Lisa","e":"Lisa.h@boulangerieslucas.fr","lat":43.78644,"lng":-1.40413,"x":false},{"r":"C-00044","n":"SCT BELLEVUE - CAFE DE PARIS","a":"5 PL BELLEVUE","c":"BIARRITZ","p":64200,"t":"0642340193","k":"Nicolas","e":"restaurant@hotelcafedeparis.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00170","n":"SDRE/ Sélection d'Alice","a":"ZONE ARTISANALE DES POUPETTES","c":"VILLENEUVE SUR AUVERS","p":91580,"t":"0160805347","k":"M. Maurice Thierry Directeur et Emie Decosta","e":"sdre@club-internet.fr","lat":48.48,"lng":2.24,"x":false},{"r":"C-00250","n":"SEME","a":"41 RUE DU TEMPLE","c":"ARES","p":33740,"t":"05 57 18 87 58","k":"Ingrid","e":"contact@onseme.bio","lat":44.76576,"lng":-1.13421,"x":false},{"r":"C-00280","n":"SHOPUP - CASINO BAYONNE NORD","a":"129 RUE MAUBEC","c":"BAYONNE","p":64100,"t":"05 59 70 12 71","k":"Khadija GALLAIS","e":"Bgallais@live.fr","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00072","n":"SIRENAK - LA MAISON DU FRONTON","a":"29 RUE HARISPE","c":"GUETHARY","p":64210,"t":"0688761148","k":"Caroline DUJAS","e":"carodujas@hotmail.fr","lat":43.42419,"lng":-1.60901,"x":false},{"r":"C-00063","n":"SNC LIONEST SOFITEL BIARRITZ LE MIRAMAR THALASS","a":"13 RUE LOUISON BOBET","c":"BIARRITZ","p":64200,"t":"0559413007","k":"Timothee Sroka","e":"timothee.sroka@sofitel.com","lat":43.48055,"lng":-1.55684,"x":false},{"r":"C-00055","n":"SNC PIQUEMAL","a":"56 ROUTE DE TYROSSE","c":"SAUBION","p":40230,"t":"0643280262","k":"Philippe PIQUEMAL","e":"piquemal.philippe@gmail.com","lat":43.671,"lng":-1.34837,"x":false},{"r":"C-00080","n":"So Bio / Bio c' Bon Bayonne","a":"10 RUE VICTOR HUGO","c":"BAYONNE","p":64100,"t":"05 59 42 00 88","k":"Nicolas Castillo","e":"bayonnecommande@bio-c-bon.fr","lat":43.49316,"lng":-1.473,"x":false},{"r":"C-00318","n":"SOBEDEX - INTERMARCHE PAU","a":"169 BD DE LA PAIX","c":"PAU","p":64000,"t":"05 59 30 51 04","k":"ROMANE","e":"pdv11286@mousquetaires.com","lat":43.31117,"lng":-0.35583,"x":false},{"r":"C-00150","n":"SOCADI - E LECLERC CAPBRETON","a":"RUE DES ECUREUIL","c":"CAPBRETON","p":40130,"t":"05 58 41 86 20","k":"Patrick Laudebat","e":"patrick.laudebat@capbreton.leclerc","lat":43.64238,"lng":-1.43123,"x":false},{"r":"C-00094","n":"SOCHACOM - INTERMARCHE HASPARREN","a":"22 RTE DE CAMBO","c":"HASPARREN","p":64240,"t":"0620516300","k":"Carole MARQUE","e":"pdv11208@mousquetaires.com","lat":43.38394,"lng":-1.30523,"x":false},{"r":"C-00151","n":"SOCIETE DE L'HOTEL DE L'AVENUE","a":"17 AVENUE GEORGES CLEMENCEAU","c":"DAX","p":40100,"t":"0608808219","k":"Frederic PUYTHORAC","e":"restaurant@thermes-avenue.com","lat":43.71032,"lng":-1.05366,"x":false},{"r":"C-00076","n":"SODANG - E LECLERC ANGLET","a":"43, RUE DU BOIS BELIN","c":"ANGLET","p":64600,"t":"0559039928","k":"Thierry Lepetit","e":"thierry.lepetit@anglet.leclerc","lat":43.48921,"lng":-1.51921,"x":false},{"r":"C-00298","n":"SODIFEL - La Clef des Champs","a":"CENTRE COMMERCIAL FIRMIS 2","c":"TOULOUSE","p":31500,"t":"05 61 34 84 48","k":"Brigittes","e":"Sasodifel@orange.fr","lat":43.60426,"lng":1.44367,"x":false},{"r":"C-00229","n":"Solo Ecologico SL - ORGANIC 49","a":"Urbieta 49","c":"SAN SEBASTIAN","p":20006,"t":"N/A","k":"BLANCA","e":"tienda@organic49.com","lat":43.3183,"lng":-1.9812,"x":false},{"r":"C-00095","n":"Sophie VEKEMANS  Château Saint-Martin","a":"356 ROUTE DE MIMBASTE","c":"POUILLON","p":40350,"t":"06 34 87 78 73","k":"Sophie Vekermans","e":"chateausaintmartin40@gmail.com","lat":43.6049,"lng":-0.99625,"x":false},{"r":"C-00264","n":"SOUQUIERES YANN - LA VIE CLAIR UZERCHE","a":"D920","c":"UZERCHE","p":19140,"t":"06 74 75 41 46","k":"YANN SOUQUIERES","e":"lavieclaireuzerche@outlook.fr","lat":45.42462,"lng":1.56341,"x":false},{"r":"C-00339","n":"SPUC LASTERKA","a":"N/A","c":"ST PEE SUR NIVELLE","p":64310,"t":"06 38 19 26 60","k":"LEAN","e":"contact@spuclasterka.fr","lat":43.35645,"lng":-1.55058,"x":false},{"r":"C-00372","n":"SUMENDI EKODENDA","a":"Eusko Gudarien Kalea, 11","c":"ORIO","p":20810,"t":"+34 605 717 519","k":"Magdalena Mancha Juez","e":"info@sumendiekodenda.eus","lat":43.2787,"lng":-2.12537,"x":false},{"r":"C-00376","n":"SUPER U ST MARTIN DE SEIGNANX - CAMPAS DISTRIBUTION","a":"C C, 1300 AV. DE BARRERE CD 54","c":"ST MARTIN DE SEIGNANX","p":40390,"t":"05 59 56 12 62","k":"","e":"superu.saintmartindeseignanx.compta2@cooperative-u.fr","lat":43.54306,"lng":-1.38718,"x":false},{"r":"C-00370","n":"TERRES D'EPICES","a":"17 GRAND RUE","c":"VIEUX BOUCAU LES BAINS","p":40480,"t":"05 58 72 86 34","k":"ERIC PEDRON","e":"info@terresdepices.fr","lat":43.78644,"lng":-1.40413,"x":false},{"r":"C-00155","n":"Terroirs Pyrénéens - DTPYR - LOURDES","a":"74, AVENUE DU MARECHEL JUIN","c":"LOURDES","p":65100,"t":"0616334119","k":"Serge BERGERET","e":"sergebergeret@infonie.fr","lat":43.1,"lng":-0.05,"x":false},{"r":"C-00228","n":"TODO ORGANIC SL - ORGANIC","a":"Avenida Navarra 3","c":"TOLOSA","p":20400,"t":"+34 943 11 87 62","k":"BLANCA","e":"tolosa@organic49.com","lat":43.13484,"lng":-2.07801,"x":false},{"r":"C-00090","n":"TOMLELOU - LOUIS LA PIZZA","a":"347 BD DES SPORTS","c":"POUILLON","p":40350,"t":"0988043837","k":"Stéphane Delphin","e":"stef.delphin@orange.fr","lat":43.6049,"lng":-0.99625,"x":false},{"r":"C-00388","n":"U EXPRESS MOLIETS - MOLIDIS","a":"2401 AV DES LACS","c":"MOLIETS ET MAA","p":40660,"t":"05 58 42 90 00","k":"","e":"uexpress.moliets@cooperative-u.fr","lat":43.85,"lng":-1.38,"x":false},{"r":"C-00085","n":"UHAINA (UNHAINA)","a":"20 AV ANDRE ITHURRALDE","c":"ST JEAN DE LUZ","p":64500,"t":"0559267452","k":"Jean-François FRANCISCO","e":"jean-francois.francisco@wanadoo.fr","lat":43.38871,"lng":-1.66267,"x":false},{"r":"C-00033","n":"UNE IDEE DONT L'HEURE EST VENUE / LE PETIT MAGASIN GENERAL","a":"71 RUE GEORGE STEPHENSON","c":"ST PIERRE DU MONT","p":40280,"t":"0614828985","k":"Julie LEQUIME","e":"contact@lepetitmagasingeneral.fr","lat":43.88453,"lng":-0.52185,"x":false},{"r":"C-00267","n":"UPATEGIA - bidart","a":"5 AVENUE CUMBA BERRIA","c":"BIDART","p":64210,"t":"0618615010","k":"LANCIEN David","e":"contact@chaidebidart.fr","lat":43.43698,"lng":-1.59294,"x":false},{"r":"C-00201","n":"VENTA IRIARTEA","a":"BO. DANTXARINEA,25","c":"URDAX","p":31712,"t":"0034 608 95 86 71","k":"Xabi iriarte","e":"ventairiartea@hotmail.es","lat":43.246,"lng":-1.481,"x":false},{"r":"C-00164","n":"VENTA PACO SL","a":"NAVARRA","c":"DANTXARINEA","p":31712,"t":"0034948599013","k":"RAFA","e":"","lat":43.246,"lng":-1.483,"x":false},{"r":"C-00263","n":"VENTA PEIO S.L.","a":"Almacen (001) IBARDIN","c":"BERA","p":31780,"t":"+34 681 20 21 58","k":"ELVIRA AYANI","e":"e.ayani@ventapeio.com","lat":43.28177,"lng":-1.68632,"x":false},{"r":"C-00111","n":"VICAL - Intermarché Bidart","a":"RTE NATIONALE 10","c":"BIDART","p":64210,"t":"05 59 47 58 18","k":"Olivia TAGUET","e":"crepiceriebidart@gmail.com","lat":43.43698,"lng":-1.59294,"x":false},{"r":"C-00398","n":"VIDEO STAR 34 - MON EPICERIE BIO","a":"8 AV BOUISSON-BERTRAND","c":"MONTPELLIER","p":34090,"t":"04 67 52 17 95","k":"LAURENT VALERO","e":"laurent.valero294@orange.fr","lat":43.61092,"lng":3.87723,"x":false},{"r":"C-00367","n":"VIVAL ILBARRITZ","a":"AV. DE BIARRITZ","c":"BIDART","p":64210,"t":"05 59 23 00 29","k":"NATHALIE","e":"vivalilbarritz@gmail.com","lat":43.43698,"lng":-1.59294,"x":false},{"r":"C-00169","n":"VRAC EN SAC - CHRISTIANE JAURY","a":"40 RUE VICTOR HUGO","c":"MAULEON","p":64130,"t":"0559288226 - 0979098226","k":"CHRISTIANE JAURY","e":"vracensacmauleon@gmail.com","lat":43.216,"lng":-0.885,"x":false},{"r":"C-00035","n":"Xibero'bio","a":"49 BOULEVARD GAMBETTA","c":"MAULEON-LICHARRE","p":64130,"t":"05 59 19 10 61","k":"Aurélie Béguerie","e":"magasin@xiberobio.fr","lat":43.22422,"lng":-0.88717,"x":false},{"r":"C-00377","n":"XIXORI","a":"Txibitibar kalea 4","c":"ANDOAIN","p":20140,"t":"+34 623 207 779","k":"Jone Etxeberria San Sebastian","e":"xixori1993@gmail.com","lat":43.21658,"lng":-2.0253,"x":false},{"r":"C-00041","n":"YAOYA","a":"251 AVENUE DU GENERAL DE GAULLE","c":"GUETHARY","p":64210,"t":"0622382419","k":"Gloria Pedezmonte","e":"yaoya.guethary@gmail.com","lat":43.42419,"lng":-1.60901,"x":false},{"r":"C-00359","n":"YAZO - CARREFOUR TARNOS","a":"BD JACQUES DUCLOS","c":"TARNOS","p":40220,"t":"N/A","k":"JULIEN RIQUIER","e":"Julien_riquier@franchise.carrefour.com","lat":43.5417,"lng":-1.46281,"x":false}]</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+// Config publique du projet Firebase "suivi-client-prospection" — sans risque
+// à exposer côté client (comparable à une clé d'API publique), la sécurité
+// réelle est assurée par les règles Firestore (lecture publique, écriture
+// validée, aucune modification/suppression après coup).
+const firebaseConfig = {
+  apiKey: "AIzaSyDgoO6PUklP5c24zIMNw-EVt7cJT_DEmr8",
+  authDomain: "suivi-client-prospection.firebaseapp.com",
+  projectId: "suivi-client-prospection",
+  storageBucket: "suivi-client-prospection.firebasestorage.app",
+  messagingSenderId: "997802508389",
+  appId: "1:997802508389:web:815443bfc87f7e1f9f468c"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+(function(){
+  "use strict";
+
+  /* ============================= DATA ============================= */
+  var CLIENTS = JSON.parse(document.getElementById('client-data-json').textContent);
+  document.getElementById('client-count').textContent = CLIENTS.length;
+  var byRef = {};
+  CLIENTS.forEach(function(c){ byRef[c.r] = c; });
+
+  /* Many clients share the exact same city-level coordinates (geocoded by
+     ville, not by precise address), so they sit on the exact same point and
+     zooming — which only spreads points that differ — can never separate
+     them. Fan out each such group in a tiny circle (a few tens of metres,
+     invisible zoomed out, separated once zoomed in) so they get distinct,
+     individually-tappable positions. */
+  (function jitterCoincidentClients(){
+    var groups = {};
+    CLIENTS.forEach(function(c){
+      var key = c.lat.toFixed(4)+','+c.lng.toFixed(4);
+      (groups[key] = groups[key] || []).push(c);
+    });
+    Object.keys(groups).forEach(function(key){
+      var arr = groups[key];
+      if(arr.length < 2) return;
+      var baseDeg = 0.0011; // ~120 m at this latitude
+      arr.forEach(function(c, i){
+        var ring = Math.floor(i/8), posInRing = i%8, ringCount = Math.min(8, arr.length - ring*8);
+        var angle = 2*Math.PI*posInRing/ringCount;
+        var rad = baseDeg * (ring+1);
+        var latAdj = rad * Math.sin(angle);
+        var lngAdj = rad * Math.cos(angle) / Math.cos(c.lat*Math.PI/180);
+        c.lat = c.lat + latAdj;
+        c.lng = c.lng + lngAdj;
+      });
+    });
+  })();
+
+  var DUE_DAYS = 60; // seuil "à relancer"
+
+  /* reference landmarks for map orientation (not client data) */
+  var LANDMARKS = [
+    {n:"Bayonne", lat:43.4933, lng:-1.4753},
+    {n:"Biarritz", lat:43.4832, lng:-1.5586},
+    {n:"Saint-Jean-de-Luz", lat:43.3888, lng:-1.6614},
+    {n:"Hendaye", lat:43.3527, lng:-1.7738},
+    {n:"Dax", lat:43.7102, lng:-1.0514},
+    {n:"Pau", lat:43.2951, lng:-0.3708},
+    {n:"Mont-de-Marsan", lat:43.8897, lng:-0.4980},
+    {n:"Donostia / San Sebastián", lat:43.3183, lng:-1.9812},
+    {n:"Pamplona / Iruña", lat:42.8125, lng:-1.6458},
+    {n:"Bilbao", lat:43.2630, lng:-2.9350},
+    {n:"Bordeaux", lat:44.8378, lng:-0.5792},
+    {n:"Bidart", lat:43.4344, lng:-1.5919},
+    {n:"Ascain", lat:43.3717, lng:-1.5936},
+    {n:"Saint-Pée-sur-Nivelle", lat:43.4147, lng:-1.5258},
+    {n:"Urrugne", lat:43.3625, lng:-1.7003},
+    {n:"Espelette", lat:43.3372, lng:-1.4453},
+    {n:"Cambo-les-Bains", lat:43.3597, lng:-1.4067},
+    {n:"Ustaritz", lat:43.3987, lng:-1.4544},
+    {n:"Hasparren", lat:43.3833, lng:-1.3000},
+    {n:"Saint-Jean-Pied-de-Port", lat:43.1639, lng:-1.2372},
+    {n:"Orthez", lat:43.4886, lng:-0.7683},
+    {n:"Oloron-Sainte-Marie", lat:43.1928, lng:-0.6089},
+    {n:"Peyrehorade", lat:43.5486, lng:-1.1219},
+    {n:"Paris", lat:48.8566, lng:2.3522},
+    {n:"Lyon", lat:45.7640, lng:4.8357},
+    {n:"Toulouse", lat:43.6047, lng:1.4442},
+    {n:"Montpellier", lat:43.6108, lng:3.8767},
+    {n:"Nantes", lat:47.2184, lng:-1.5536},
+    {n:"Tours", lat:47.3941, lng:0.6848},
+    {n:"Avignon", lat:43.9493, lng:4.8055}
+  ];
+
+  /* approximate Atlantic coastline, north (Gironde) to south (Bilbao) —
+     schematic, for visual orientation only, not survey-accurate */
+  var COASTLINE = [
+    {lat:45.90, lng:-1.15}, {lat:45.57, lng:-1.06}, {lat:44.85, lng:-1.15},
+    {lat:44.66, lng:-1.25}, {lat:44.39, lng:-1.25}, {lat:44.09, lng:-1.29},
+    {lat:43.85, lng:-1.40}, {lat:43.66, lng:-1.44}, {lat:43.53, lng:-1.52},
+    {lat:43.48, lng:-1.57}, {lat:43.39, lng:-1.66}, {lat:43.35, lng:-1.77},
+    {lat:43.32, lng:-1.98}, {lat:43.30, lng:-2.17}, {lat:43.33, lng:-2.45},
+    {lat:43.36, lng:-2.68}, {lat:43.35, lng:-3.02}, {lat:43.20, lng:-3.20},
+    {lat:42.90, lng:-3.30}
+  ];
+  /* approximate France / Spain border along the Pyrénées, west to east */
+  var BORDER = [
+    {lat:43.35, lng:-1.77}, {lat:43.28, lng:-1.60}, {lat:43.25, lng:-1.50},
+    {lat:43.10, lng:-1.35}, {lat:43.03, lng:-1.30}, {lat:42.95, lng:-1.05},
+    {lat:42.90, lng:-0.90}, {lat:42.80, lng:-0.60}, {lat:42.75, lng:-0.20},
+    {lat:42.72, lng:0.30}, {lat:42.70, lng:0.85}
+  ];
+
+  /* simplified mainland-France perimeter (coastline + land borders), for the
+     "France entière" view — schematic, not survey-accurate, just recognizable */
+  var FRANCE_OUTLINE = [
+    {lat:51.03,lng:2.38}, {lat:50.95,lng:1.85}, {lat:50.72,lng:1.61}, {lat:50.19,lng:1.60},
+    {lat:49.91,lng:0.98}, {lat:49.49,lng:0.11}, {lat:49.33,lng:-0.40}, {lat:49.65,lng:-1.62},
+    {lat:48.84,lng:-1.75}, {lat:48.65,lng:-2.02}, {lat:48.58,lng:-2.75}, {lat:48.65,lng:-3.47},
+    {lat:48.80,lng:-3.75}, {lat:48.65,lng:-4.37}, {lat:48.39,lng:-4.49}, {lat:48.08,lng:-4.79},
+    {lat:47.85,lng:-4.29}, {lat:47.75,lng:-3.37}, {lat:47.65,lng:-2.76}, {lat:47.28,lng:-2.20},
+    {lat:47.22,lng:-2.36}, {lat:46.68,lng:-1.85}, {lat:46.16,lng:-1.15}, {lat:45.90,lng:-1.06},
+    {lat:44.85,lng:-1.15}, {lat:44.66,lng:-1.25}, {lat:44.39,lng:-1.25}, {lat:44.09,lng:-1.29},
+    {lat:43.85,lng:-1.40}, {lat:43.66,lng:-1.44}, {lat:43.53,lng:-1.52}, {lat:43.35,lng:-1.77},
+    {lat:42.90,lng:-0.90}, {lat:42.80,lng:-0.60}, {lat:42.75,lng:-0.20}, {lat:42.70,lng:0.50},
+    {lat:42.55,lng:1.60}, {lat:42.51,lng:2.87}, {lat:42.70,lng:3.03}, {lat:43.20,lng:3.00},
+    {lat:43.34,lng:3.28}, {lat:43.51,lng:3.70}, {lat:43.60,lng:3.88}, {lat:43.53,lng:4.63},
+    {lat:43.39,lng:5.10}, {lat:43.30,lng:5.37}, {lat:43.12,lng:5.93}, {lat:43.27,lng:6.65},
+    {lat:43.55,lng:7.02}, {lat:43.70,lng:7.27}, {lat:43.79,lng:7.50}, {lat:44.40,lng:7.00},
+    {lat:45.07,lng:6.63}, {lat:45.83,lng:6.86}, {lat:46.20,lng:6.15}, {lat:46.65,lng:6.10},
+    {lat:47.30,lng:7.00}, {lat:48.00,lng:7.60}, {lat:49.02,lng:8.24}, {lat:49.45,lng:8.10},
+    {lat:49.50,lng:6.37}, {lat:49.90,lng:6.13}, {lat:50.09,lng:5.10}, {lat:50.30,lng:4.86},
+    {lat:50.75,lng:3.65}, {lat:51.03,lng:2.38}
+  ];
+
+  /* ============================= STATE ============================= */
+  var state = {
+    view: 'map',
+    search: '',
+    status: 'all',
+    extent: 'region',
+    selectedRef: null,
+    commercial: localStorage.getItem('snm_commercial_name') || '',
+    dashDate: ''
+  };
+
+  var visitsByRef = {};   // ref -> array of visit objects, desc by date
+  var pendingQueue = [];  // local-only, unsynced visits (array of visit objects)
+  var fbReady = false, dbWriteOK = null; // null = unknown, true/false once resolved
+
+  loadPendingQueue();
+
+  /* ============================= UTIL ============================= */
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function normSearch(s){
+    return String(s||'').toUpperCase().normalize('NFKD').replace(/[̀-ͯ]/g,'');
+  }
+  function todayISO(){
+    var d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function parseISO(s){
+    if(!s) return null;
+    var p = s.split('-');
+    if(p.length!==3) return null;
+    var d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function daysAgo(iso){
+    var d = parseISO(iso);
+    if(!d) return null;
+    var ms = Date.now() - d.getTime();
+    return Math.floor(ms/86400000);
+  }
+  function fmtDate(iso){
+    var d = parseISO(iso);
+    if(!d) return iso||'';
+    return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'});
+  }
+  function fmtRelative(iso){
+    var n = daysAgo(iso);
+    if(n===null) return '';
+    if(n<=0) return "aujourd'hui";
+    if(n===1) return 'hier';
+    if(n<30) return 'il y a '+n+' j';
+    if(n<365) return 'il y a '+Math.round(n/30)+' mois';
+    return 'il y a '+Math.round(n/365)+' an'+(n>=730?'s':'');
+  }
+  function initials(name){
+    name = (name||'').trim();
+    if(!name) return '?';
+    var parts = name.split(/\s+/);
+    return (parts[0][0]+(parts[1]?parts[1][0]:'')).toUpperCase();
+  }
+  function debounce(fn, ms){
+    var t; return function(){ var a=arguments, ctx=this; clearTimeout(t); t=setTimeout(function(){fn.apply(ctx,a);}, ms); };
+  }
+
+  /* ============================= VISITS / STATUS ============================= */
+  function lastVisit(ref){
+    var arr = visitsByRef[ref];
+    if(!arr || !arr.length) return null;
+    return arr[0]; // pre-sorted desc
+  }
+  function clientStatus(ref){
+    var v = lastVisit(ref);
+    if(!v) return 'never';
+    var n = daysAgo(v.date);
+    if(n===null) return 'never';
+    return n > DUE_DAYS ? 'due' : 'ok';
+  }
+  function statusColorVar(status){
+    return status==='never' ? '--danger' : status==='due' ? '--warn' : '--good';
+  }
+  function statusLabel(status){
+    return status==='never' ? 'Pas encore visité' : status==='due' ? 'À relancer' : 'Suivi actif';
+  }
+  function rebuildVisitIndex(dbDocs){
+    var byRefTmp = {};
+    function add(v){
+      if(!byRefTmp[v.ref]) byRefTmp[v.ref] = [];
+      byRefTmp[v.ref].push(v);
+    }
+    (dbDocs||[]).forEach(add);
+    pendingQueue.forEach(add);
+    Object.keys(byRefTmp).forEach(function(ref){
+      byRefTmp[ref].sort(function(a,b){
+        var da = a.date||'', db_ = b.date||'';
+        if(da!==db_) return da < db_ ? 1 : -1;
+        return (b.createdAt||0) - (a.createdAt||0);
+      });
+    });
+    visitsByRef = byRefTmp;
+  }
+  var lastDbDocs = [];
+  function refreshVisitsAndRender(){
+    rebuildVisitIndex(lastDbDocs);
+    renderCounts();
+    renderCurrentView();
+    if(state.selectedRef) renderSheet(state.selectedRef);
+  }
+
+  /* ============================= PENDING QUEUE (local fallback) ============================= */
+  function loadPendingQueue(){
+    try{
+      var raw = localStorage.getItem('snm_pending_visits');
+      pendingQueue = raw ? JSON.parse(raw) : [];
+    }catch(e){ pendingQueue = []; }
+  }
+  function savePendingQueue(){
+    try{ localStorage.setItem('snm_pending_visits', JSON.stringify(pendingQueue)); }catch(e){}
+  }
+  function updateSyncBanner(){
+    var el = document.getElementById('sync-banner');
+    if(pendingQueue.length){
+      el.hidden = false;
+      el.textContent = pendingQueue.length + ' compte' + (pendingQueue.length>1?'s':'') + ' rendu' + (pendingQueue.length>1?'s':'') + ' en attente de synchronisation (enregistré' + (pendingQueue.length>1?'s':'') + ' sur cet appareil).';
+    } else {
+      el.hidden = true;
+    }
+  }
+  function flushPendingQueue(){
+    if(!fbReady || !pendingQueue.length) return;
+    var toFlush = pendingQueue.slice();
+    toFlush.forEach(function(v){
+      var payload = {
+        ref: v.ref, clientName: v.clientName, commercial: v.commercial,
+        date: v.date, notes: v.notes, createdAt: v.createdAt
+      };
+      if(v.photoStore) payload.photoStore = v.photoStore;
+      if(v.photoShelf) payload.photoShelf = v.photoShelf;
+      addDoc(collection(db, 'visites'), payload).then(function(){
+        pendingQueue = pendingQueue.filter(function(p){ return p.localId !== v.localId; });
+        savePendingQueue();
+        updateSyncBanner();
+        refreshVisitsAndRender();
+      }).catch(function(){ /* keep in queue, will retry next flush */ });
+    });
+  }
+
+  /* ============================= FIREBASE SYNC ============================= */
+  // Remplace la synchronisation Claude (db/user/assets) par Firestore : la
+  // même base de données partagée est lue et écrite par tous les commerciaux,
+  // sans compte ni organisation Claude nécessaire.
+  function initCapabilities(){
+    try{
+      var q = query(collection(db, 'visites'), orderBy('createdAt', 'desc'), limit(2000));
+      onSnapshot(q, function(snap){
+        fbReady = true;
+        lastDbDocs = snap.docs.map(function(d){
+          var data = d.data() || {};
+          return {
+            id: d.id, ref: data.ref, clientName: data.clientName,
+            commercial: data.commercial, date: data.date, notes: data.notes,
+            createdAt: data.createdAt || 0, synced:true,
+            photoStore: data.photoStore || null, photoShelf: data.photoShelf || null
+          };
+        });
+        dbWriteOK = true;
+        refreshVisitsAndRender();
+        flushPendingQueue();
+      }, function(err){
+        fbReady = false;
+        dbWriteOK = false;
+        updateSyncBanner();
+        refreshVisitsAndRender();
+      });
+    } catch(e){
+      updateSyncBanner();
+      refreshVisitsAndRender();
+    }
+  }
+
+  /* ============================= PHOTOS ============================= */
+  // Photos redimensionnées/compressées sur l'appareil, puis stockées
+  // directement dans le document de visite (base64) — pas de service de
+  // stockage séparé nécessaire, tout reste centralisé dans Firestore.
+  function blobToDataURL(blob){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(){ resolve(reader.result); };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+  function compressImage(file, maxDim, quality){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        var w = img.width, h = img.height;
+        var scale = Math.min(1, maxDim / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w*scale)), ch = Math.max(1, Math.round(h*scale));
+        var canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+        canvas.toBlob(function(blob){
+          URL.revokeObjectURL(url);
+          if(blob) resolve(blob); else reject(new Error('compress_failed'));
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = function(e){ URL.revokeObjectURL(url); reject(e); };
+      img.src = url;
+    });
+  }
+  var photoState = {store:null, shelf:null}; // slot -> {blob, previewUrl} pending upload
+  function wirePhotoInputs(ref){
+    photoState = {store:null, shelf:null};
+    ['store','shelf'].forEach(function(slot){
+      var input = document.getElementById('f-photo-'+slot);
+      var addBtn = document.getElementById('f-photo-'+slot+'-btn');
+      var preview = document.getElementById('f-photo-'+slot+'-preview');
+      var img = preview ? preview.querySelector('img') : null;
+      var removeBtn = preview ? preview.querySelector('.photo-remove') : null;
+      var status = document.getElementById('f-photo-'+slot+'-status');
+      if(!input) return;
+      addBtn.addEventListener('click', function(){ input.click(); });
+      input.addEventListener('change', function(){
+        var file = input.files && input.files[0];
+        if(!file) return;
+        status.textContent = 'Compression…';
+        status.hidden = false;
+        compressImage(file, 900, 0.55).then(function(blob){
+          photoState[slot] = { blob: blob };
+          var previewUrl = URL.createObjectURL(blob);
+          img.src = previewUrl;
+          preview.hidden = false;
+          addBtn.hidden = true;
+          status.hidden = true;
+          status.textContent = '';
+        }).catch(function(){
+          status.textContent = 'Photo illisible, réessaie.';
+        });
+      });
+      if(removeBtn){
+        removeBtn.addEventListener('click', function(){
+          photoState[slot] = null;
+          input.value = '';
+          preview.hidden = true;
+          addBtn.hidden = false;
+        });
+      }
+    });
+  }
+  function uploadPendingPhotos(){
+    var slots = Object.keys(photoState).filter(function(k){ return photoState[k] && photoState[k].blob; });
+    if(!slots.length) return Promise.resolve({});
+    return Promise.all(slots.map(function(slot){
+      return blobToDataURL(photoState[slot].blob).then(function(dataUrl){
+        return {slot:slot, dataUrl:dataUrl};
+      }).catch(function(){ return null; });
+    })).then(function(results){
+      var out = {};
+      results.forEach(function(r){ if(r) out[r.slot] = {dataUrl:r.dataUrl}; });
+      return out;
+    });
+  }
+
+  function saveVisit(ref, clientName, commercial, date, notes, photos){
+    var createdAt = Date.now();
+    var payload = { ref:ref, clientName:clientName, commercial:commercial, date:date, notes:notes, createdAt:createdAt };
+    if(photos && photos.store) payload.photoStore = photos.store;
+    if(photos && photos.shelf) payload.photoShelf = photos.shelf;
+    var localVisit = Object.assign({}, payload, {localId:'l'+createdAt+Math.random().toString(36).slice(2)});
+    if(fbReady){
+      return addDoc(collection(db, 'visites'), payload).then(function(){
+        return {ok:true, synced:true};
+      }).catch(function(err){
+        pendingQueue.push(localVisit);
+        savePendingQueue();
+        updateSyncBanner();
+        refreshVisitsAndRender();
+        return {ok:true, synced:false};
+      });
+    } else {
+      pendingQueue.push(localVisit);
+      savePendingQueue();
+      updateSyncBanner();
+      refreshVisitsAndRender();
+      return Promise.resolve({ok:true, synced:false});
+    }
+  }
+
+  /* ============================= FILTERING ============================= */
+  function filteredClients(){
+    var q = normSearch(state.search);
+    return CLIENTS.filter(function(c){
+      if(state.status !== 'all' && clientStatus(c.r) !== state.status) return false;
+      if(q){
+        var hay = normSearch(c.n + ' ' + c.c + ' ' + c.r + ' ' + (c.k||''));
+        if(hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+  function renderCounts(){
+    var all = CLIENTS.length, never=0, due=0, ok=0;
+    CLIENTS.forEach(function(c){
+      var s = clientStatus(c.r);
+      if(s==='never') never++; else if(s==='due') due++; else ok++;
+    });
+    document.getElementById('count-all').textContent = all;
+    document.getElementById('count-never').textContent = never;
+    document.getElementById('count-due').textContent = due;
+    document.getElementById('count-ok').textContent = ok;
+  }
+
+  /* ============================= MAP ============================= */
+  var VB_W = 400, VB_H = 560;
+  var REGION_BOUNDS = {latMin:42.55, latMax:45.05, lngMin:-3.05, lngMax:0.85};
+
+  function computeAllBounds(){
+    var lats = CLIENTS.map(function(c){return c.lat;});
+    var lngs = CLIENTS.map(function(c){return c.lng;});
+    // exclude extreme outliers (>2000km away) from auto-fit; they are noted separately
+    var core = CLIENTS.filter(function(c){ return c.lat > 30 && c.lat < 55 && c.lng > -6 && c.lng < 10; });
+    lats = core.map(function(c){return c.lat;});
+    lngs = core.map(function(c){return c.lng;});
+    var pad = 0.35;
+    return {
+      latMin: Math.min.apply(null, lats) - pad,
+      latMax: Math.max.apply(null, lats) + pad,
+      lngMin: Math.min.apply(null, lngs) - pad,
+      lngMax: Math.max.apply(null, lngs) + pad
+    };
+  }
+  var ALL_BOUNDS = null;
+
+  /* ---- pan / zoom state (applied as a transform on the inner <g>, so
+     points that overlap at rest can be spread apart and tapped individually) ---- */
+  var mapView = {scale:1, tx:0, ty:0};
+  var MIN_SCALE = 1, MAX_SCALE = 45;
+  function clampScale(s){ return Math.max(MIN_SCALE, Math.min(MAX_SCALE, s)); }
+  function transformStr(){ return 'translate('+mapView.tx.toFixed(2)+','+mapView.ty.toFixed(2)+') scale('+mapView.scale.toFixed(3)+')'; }
+  var LABEL_ZOOM_THRESHOLD = 12;
+  function applyTransform(){
+    var g = document.getElementById('map-g');
+    if(g){
+      g.setAttribute('transform', transformStr());
+      g.classList.toggle('labels-on', mapView.scale >= LABEL_ZOOM_THRESHOLD);
+    }
+    // keep dot size visually constant regardless of zoom level, so zooming
+    // in spreads dot CENTERS apart without inflating the dots themselves
+    var svg = document.getElementById('map-svg');
+    if(svg) svg.style.setProperty('--dot-inv-scale', (1/mapView.scale).toFixed(4));
+  }
+  function svgPoint(svg, clientX, clientY){
+    var pt = svg.createSVGPoint();
+    pt.x = clientX; pt.y = clientY;
+    var ctm = svg.getScreenCTM();
+    if(!ctm) return {x:0,y:0};
+    var p = pt.matrixTransform(ctm.inverse());
+    return {x:p.x, y:p.y};
+  }
+  function zoomAt(clientX, clientY, factor){
+    var svg = document.getElementById('map-svg');
+    var v = svgPoint(svg, clientX, clientY);
+    var newScale = clampScale(mapView.scale * factor);
+    if(newScale === mapView.scale) return;
+    var pf = {x:(v.x - mapView.tx)/mapView.scale, y:(v.y - mapView.ty)/mapView.scale};
+    mapView.scale = newScale;
+    mapView.tx = v.x - newScale*pf.x;
+    mapView.ty = v.y - newScale*pf.y;
+    applyTransform();
+  }
+  function resetView(){ mapView.scale=1; mapView.tx=0; mapView.ty=0; applyTransform(); }
+
+  function initMapGestures(){
+    var wrap = document.getElementById('map-wrap');
+    var svg = document.getElementById('map-svg');
+    var pointers = {}; // id -> {x,y} client coords
+    var mode = null;   // 'pan' | 'pinch'
+    var lastV = null;
+    var prevDist = 0, prevMid = null;
+    var totalMove = 0;
+    var suppressClick = false;
+
+    function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+    function mid(a,b){ return {x:(a.x+b.x)/2, y:(a.y+b.y)/2}; }
+    function ids(){ return Object.keys(pointers); }
+
+    wrap.addEventListener('pointerdown', function(e){
+      if(e.target.closest('.map-toolbar, .zoom-controls, .map-note')) return;
+      pointers[e.pointerId] = {x:e.clientX, y:e.clientY};
+      try{ wrap.setPointerCapture(e.pointerId); }catch(err){}
+      var n = ids().length;
+      if(n === 1){
+        mode = 'pan';
+        lastV = svgPoint(svg, e.clientX, e.clientY);
+        totalMove = 0;
+      } else if(n === 2){
+        mode = 'pinch';
+        var a = pointers[ids()[0]], b = pointers[ids()[1]];
+        prevDist = dist(a,b);
+        prevMid = mid(a,b);
+      }
+    });
+
+    wrap.addEventListener('pointermove', function(e){
+      if(!pointers[e.pointerId]) return;
+      pointers[e.pointerId] = {x:e.clientX, y:e.clientY};
+      var n = ids().length;
+      if(mode === 'pan' && n === 1){
+        var v = svgPoint(svg, e.clientX, e.clientY);
+        var dx = v.x - lastV.x, dy = v.y - lastV.y;
+        totalMove += Math.hypot(e.movementX||0, e.movementY||0);
+        mapView.tx += dx; mapView.ty += dy;
+        lastV = v;
+        applyTransform();
+      } else if(mode === 'pinch' && n === 2){
+        var a = pointers[ids()[0]], b = pointers[ids()[1]];
+        var d = dist(a,b);
+        var m = mid(a,b);
+        if(prevDist > 0){
+          var factor = d / prevDist;
+          zoomAt(m.x, m.y, factor);
+        }
+        prevDist = d; prevMid = m;
+        totalMove += 10; // pinch always counts as a gesture, never a tap
+      }
+    });
+
+    function endPointer(e){
+      delete pointers[e.pointerId];
+      var n = ids().length;
+      if(n === 0){
+        if(totalMove > 6){ suppressClick = true; setTimeout(function(){ suppressClick = false; }, 0); }
+        mode = null;
+      } else if(n === 1){
+        // transition from pinch back to pan with the remaining finger
+        mode = 'pan';
+        var k = ids()[0];
+        lastV = svgPoint(svg, pointers[k].x, pointers[k].y);
+      }
+    }
+    wrap.addEventListener('pointerup', endPointer);
+    wrap.addEventListener('pointercancel', endPointer);
+
+    // swallow the synthetic click that follows a drag, so a pan never opens a sheet
+    svg.addEventListener('click', function(e){
+      if(suppressClick){ e.stopPropagation(); e.preventDefault(); }
+    }, true);
+
+    wrap.addEventListener('wheel', function(e){
+      e.preventDefault();
+      var factor = Math.pow(1.0015, -e.deltaY);
+      zoomAt(e.clientX, e.clientY, factor);
+    }, {passive:false});
+
+    svg.addEventListener('dblclick', function(e){
+      e.preventDefault();
+      zoomAt(e.clientX, e.clientY, 1.8);
+    });
+
+    document.getElementById('zoom-in').addEventListener('click', function(){
+      var r = wrap.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, 1.5);
+    });
+    document.getElementById('zoom-out').addEventListener('click', function(){
+      var r = wrap.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, 1/1.5);
+    });
+    document.getElementById('zoom-reset').addEventListener('click', resetView);
+  }
+
+  function project(lat, lng, bounds){
+    var latSpan = bounds.latMax - bounds.latMin;
+    var lngSpan = (bounds.lngMax - bounds.lngMin) * Math.cos(bounds.latMin * Math.PI/180);
+    var scale = Math.min((VB_W-24) / lngSpan, (VB_H-24) / latSpan);
+    var cx = VB_W/2, cy = VB_H/2;
+    var lngMid = (bounds.lngMin+bounds.lngMax)/2, latMid = (bounds.latMin+bounds.latMax)/2;
+    var x = cx + (lng - lngMid) * Math.cos(bounds.latMin*Math.PI/180) * scale;
+    var y = cy - (lat - latMid) * scale;
+    return {x:x, y:y};
+  }
+
+  function currentBounds(){
+    if(state.extent === 'all'){
+      if(!ALL_BOUNDS) ALL_BOUNDS = computeAllBounds();
+      return ALL_BOUNDS;
+    }
+    return REGION_BOUNDS;
+  }
+
+  function renderMap(){
+    var svg = document.getElementById('map-svg');
+    var bounds = currentBounds();
+    var list = filteredClients();
+    var visibleSet = {}; list.forEach(function(c){ visibleSet[c.r]=true; });
+
+    var parts = [];
+    // land base
+    parts.push('<rect x="0" y="0" width="'+VB_W+'" height="'+VB_H+'" fill="var(--map-bg)"></rect>');
+
+    if(state.extent === 'all'){
+      // whole-country view: fill everything as sea, then cut out mainland
+      // France's silhouette on top, so the shape reads instantly
+      parts.push('<rect x="0" y="0" width="'+VB_W+'" height="'+VB_H+'" fill="var(--map-sea)"></rect>');
+      var francePts = FRANCE_OUTLINE.map(function(p){ return project(p.lat, p.lng, bounds); });
+      var francePath = 'M ' + francePts.map(function(p){ return p.x.toFixed(1)+','+p.y.toFixed(1); }).join(' L ') + ' Z';
+      parts.push('<path d="'+francePath+'" fill="var(--map-bg)" stroke="var(--map-sea-line)" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>');
+    } else {
+      // regional view: everything west of the Atlantic coastline is sea
+      var coastPts = COASTLINE.map(function(p){ return project(p.lat, p.lng, bounds); });
+      var seaPath = 'M -20,-20 L ' + coastPts.map(function(p){ return p.x.toFixed(1)+','+p.y.toFixed(1); }).join(' L ') + ' L -20,'+(VB_H+20)+' Z';
+      parts.push('<path d="'+seaPath+'" fill="var(--map-sea)"></path>');
+      parts.push('<polyline points="'+coastPts.map(function(p){ return p.x.toFixed(1)+','+p.y.toFixed(1); }).join(' ')+'" fill="none" stroke="var(--map-sea-line)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>');
+      parts.push('<g transform="translate(24,80)"><g class="dot-scale-wrap"><text class="map-city" x="0" y="0" fill="var(--map-sea-line)" style="font-style:italic;">Océan Atlantique</text></g></g>');
+    }
+
+    // France / Spain border (Pyrénées)
+    var borderPts = BORDER.map(function(p){ return project(p.lat, p.lng, bounds); });
+    parts.push('<polyline points="'+borderPts.map(function(p){ return p.x.toFixed(1)+','+p.y.toFixed(1); }).join(' ')+'" fill="none" stroke="var(--map-border)" stroke-width="1.2" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></polyline>');
+
+    // faint reference grid (subtle, on top of land/sea)
+    for(var gx=0; gx<=VB_W; gx+=40){ parts.push('<line x1="'+gx+'" y1="0" x2="'+gx+'" y2="'+VB_H+'" stroke="var(--map-line)" stroke-width="0.6" opacity="0.5" vector-effect="non-scaling-stroke"></line>'); }
+    for(var gy=0; gy<=VB_H; gy+=40){ parts.push('<line x1="0" y1="'+gy+'" x2="'+VB_W+'" y2="'+gy+'" stroke="var(--map-line)" stroke-width="0.6" opacity="0.5" vector-effect="non-scaling-stroke"></line>'); }
+
+    // landmarks — counter-scaled like client dots, so their pin stays put at
+    // the right spot and their label doesn't balloon (and drift off-center) on zoom
+    LANDMARKS.forEach(function(l){
+      var p = project(l.lat, l.lng, bounds);
+      if(p.x<-10||p.x>VB_W+10||p.y<-10||p.y>VB_H+10) return;
+      parts.push(
+        '<g class="landmark" transform="translate('+p.x.toFixed(1)+','+p.y.toFixed(1)+')">'+
+        '<g class="dot-scale-wrap">'+
+        '<circle class="map-city-dot" cx="0" cy="0" r="2"></circle>'+
+        '<text class="map-city" x="4" y="3">'+esc(l.n)+'</text>'+
+        '</g></g>'
+      );
+    });
+
+    // client dots (dim ones not in current filter)
+    var outlierCount = 0;
+    CLIENTS.forEach(function(c){
+      var p = project(c.lat, c.lng, bounds);
+      var onscreen = p.x>=-6 && p.x<=VB_W+6 && p.y>=-6 && p.y<=VB_H+6;
+      if(!onscreen){ if(visibleSet[c.r]) outlierCount++; return; }
+      var status = clientStatus(c.r);
+      var colorVar = statusColorVar(status);
+      var dim = !visibleSet[c.r];
+      var sel = state.selectedRef === c.r;
+      var r = sel ? 6.5 : 4.2;
+      var labelText = c.n.split(/\s*-\s*/)[0].trim();
+      if(labelText.length > 28) labelText = labelText.slice(0,27)+'…';
+      parts.push(
+        '<g class="map-dot'+(sel?' selected':'')+'" data-ref="'+c.r+'" transform="translate('+p.x.toFixed(1)+','+p.y.toFixed(1)+')" opacity="'+(dim?0.22:1)+'" tabindex="0" role="button" aria-label="'+esc(c.n)+'">'+
+        '<g class="dot-scale-wrap">'+
+        '<circle class="halo" cx="0" cy="0" r="11" fill="var('+colorVar+')" opacity="0.22"></circle>'+
+        '<circle cx="0" cy="0" r="'+r+'" fill="var('+colorVar+')" stroke="var(--surface)" stroke-width="1.4"></circle>'+
+        '<text class="dot-label" x="'+(r+4)+'" y="3.5">'+esc(labelText)+'</text>'+
+        '</g></g>'
+      );
+    });
+
+    svg.innerHTML = '<g id="map-g">' + parts.join('') + '</g>';
+    applyTransform();
+    svg.querySelectorAll('.map-dot').forEach(function(el){
+      el.addEventListener('click', function(){ handleDotTap(el.getAttribute('data-ref')); });
+      el.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); handleDotTap(el.getAttribute('data-ref')); } });
+    });
+
+    var noteEl = document.getElementById('map-note');
+    if(state.extent==='region' && outlierCount>0){
+      noteEl.hidden = false;
+      noteEl.innerHTML = outlierCount + ' client' + (outlierCount>1?'s':'') + ' hors zone. <a href="#" id="map-note-link">Voir en liste</a>';
+      var link = document.getElementById('map-note-link');
+      if(link) link.addEventListener('click', function(e){ e.preventDefault(); switchView('list'); });
+    } else {
+      noteEl.hidden = true;
+    }
+  }
+
+  /* ============================= LIST ============================= */
+  function renderList(){
+    var el = document.getElementById('list-scroll');
+    var list = filteredClients().slice().sort(function(a,b){ return a.n.localeCompare(b.n,'fr'); });
+    var html = '<div class="list-count">'+list.length+' point'+(list.length>1?'s':'')+' de vente</div>';
+    list.forEach(function(c){
+      var status = clientStatus(c.r);
+      var lv = lastVisit(c.r);
+      html += '<button class="card" data-ref="'+c.r+'" type="button">'+
+        '<span class="status-dot" style="background:var('+statusColorVar(status)+')"></span>'+
+        '<span class="card-body">'+
+          '<span class="card-title">'+esc(c.n)+'</span>'+
+          '<span class="card-sub">'+esc(c.c)+(c.k?' · '+esc(c.k):'')+'</span>'+
+          '<span class="card-meta">'+(lv ? 'Dernière visite '+fmtRelative(lv.date) : 'Pas encore visité')+'</span>'+
+        '</span>'+
+        '<span class="chev">›</span>'+
+      '</button>';
+    });
+    if(!list.length) html += '<div class="empty-hint">Aucun client ne correspond à ces filtres.</div>';
+    el.innerHTML = html;
+    el.querySelectorAll('.card').forEach(function(card){
+      card.addEventListener('click', function(){ openSheet(card.getAttribute('data-ref')); });
+    });
+  }
+
+  /* ============================= DASHBOARD ============================= */
+  function allVisitsFlat(){
+    var out = [];
+    Object.keys(visitsByRef).forEach(function(ref){ visitsByRef[ref].forEach(function(v){ out.push(v); }); });
+    out.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
+    return out;
+  }
+  function renderDashboard(){
+    var el = document.getElementById('dash-scroll');
+    var now = Date.now();
+    var weekAgo = now - 7*86400000, monthAgo = now - 30*86400000;
+    var flat = allVisitsFlat();
+    var visitsWeek = flat.filter(function(v){ return v.createdAt >= weekAgo; }).length;
+    var visitsMonth = flat.filter(function(v){ return v.createdAt >= monthAgo; }).length;
+    var never=0, due=0;
+    CLIENTS.forEach(function(c){ var s=clientStatus(c.r); if(s==='never') never++; else if(s==='due') due++; });
+
+    var byCommercial = {};
+    flat.forEach(function(v){
+      var name = (v.commercial||'Non renseigné').trim() || 'Non renseigné';
+      byCommercial[name] = (byCommercial[name]||0) + 1;
+    });
+    var commList = Object.keys(byCommercial).map(function(k){ return {name:k, count:byCommercial[k]}; })
+      .sort(function(a,b){ return b.count-a.count; }).slice(0,8);
+    var maxCount = commList.length ? commList[0].count : 1;
+
+    var html = '';
+    html += '<div class="stat-grid">'+
+      '<div class="stat-tile"><span class="val tabular">'+CLIENTS.length+'</span><span class="lbl">Clients au total</span></div>'+
+      '<div class="stat-tile danger"><span class="val tabular">'+never+'</span><span class="lbl">Pas encore visités</span></div>'+
+      '<div class="stat-tile warn"><span class="val tabular">'+due+'</span><span class="lbl">À relancer (+'+DUE_DAYS+'j)</span></div>'+
+      '<div class="stat-tile good"><span class="val tabular">'+visitsWeek+'</span><span class="lbl">Visites cette semaine</span></div>'+
+    '</div>';
+
+    html += '<div><div class="section-head"><h2 class="section-title">Par commercial</h2></div>';
+    if(commList.length){
+      html += '<div class="rank-list" style="margin-top:10px;">';
+      commList.forEach(function(r){
+        var pct = Math.max(6, Math.round(100*r.count/maxCount));
+        html += '<div class="rank-row"><span class="rank-name">'+esc(r.name)+'</span>'+
+          '<span class="rank-bar-track"><span class="rank-bar-fill" style="width:'+pct+'%"></span></span>'+
+          '<span class="rank-count tabular">'+r.count+'</span></div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="empty-hint">Aucun compte rendu enregistré pour le moment.</div>';
+    }
+    html += '<div class="empty-hint" style="padding-top:8px;">'+visitsMonth+' visite'+(visitsMonth>1?'s':'')+' sur les 30 derniers jours.</div></div>';
+
+    var dateFiltered = state.dashDate ? flat.filter(function(v){ return v.date === state.dashDate; }) : null;
+    var recent = dateFiltered ? dateFiltered : flat.slice(0, 25);
+
+    html += '<div>'+
+      '<div class="section-head">'+
+        '<h2 class="section-title">'+(dateFiltered ? 'Visites du '+fmtDate(state.dashDate) : 'Derniers comptes rendus')+'</h2>'+
+      '</div>'+
+      '<div style="display:flex; align-items:center; gap:8px; margin-top:8px;">'+
+        '<input type="date" id="dash-date-filter" value="'+esc(state.dashDate||'')+'" style="border:1px solid var(--border); background:var(--surface); border-radius:9px; padding:7px 9px; font-size:12.5px; color:var(--ink);">'+
+        (state.dashDate ? '<button class="muted-link" id="dash-date-clear" type="button">Effacer</button>' : '')+
+      '</div>'+
+      '<div class="feed" style="margin-top:6px;">';
+    if(!recent.length){
+      html += '<div class="empty-hint">'+(dateFiltered ? 'Aucune visite ce jour-là.' : 'Rien à afficher pour l\'instant — les comptes rendus des commerciaux apparaîtront ici.')+'</div>';
+    } else {
+      recent.forEach(function(v){
+        var name = v.commercial || 'Non renseigné';
+        var photosHtml = '';
+        if(v.photoStore || v.photoShelf){
+          photosHtml = '<div class="visit-photos">'+
+            (v.photoStore ? '<a href="'+v.photoStore.dataUrl+'" target="_blank" rel="noopener" title="Photo du magasin"><img src="'+v.photoStore.dataUrl+'" alt=""></a>' : '')+
+            (v.photoShelf ? '<a href="'+v.photoShelf.dataUrl+'" target="_blank" rel="noopener" title="Photo du rayon"><img src="'+v.photoShelf.dataUrl+'" alt=""></a>' : '')+
+          '</div>';
+        }
+        html += '<div class="feed-item">'+
+          '<span class="feed-avatar">'+esc(initials(name))+'</span>'+
+          '<span class="feed-body">'+
+            '<span class="feed-top"><span class="who">'+esc(name)+'</span><span class="when">'+(dateFiltered ? '' : fmtRelative(v.date))+(v.synced===false?' <span class="pending-tag">· en attente</span>':'')+'</span></span>'+
+            '<span class="feed-client">'+esc(v.clientName || (byRef[v.ref]&&byRef[v.ref].n) || v.ref)+'</span>'+
+            (v.notes ? '<span class="feed-notes">'+esc(v.notes)+'</span>' : '')+
+            photosHtml+
+          '</span>'+
+        '</div>';
+      });
+    }
+    html += '</div></div>';
+
+    el.innerHTML = html;
+    var dateInput = document.getElementById('dash-date-filter');
+    if(dateInput) dateInput.addEventListener('change', function(){ state.dashDate = dateInput.value || ''; renderDashboard(); });
+    var clearBtn = document.getElementById('dash-date-clear');
+    if(clearBtn) clearBtn.addEventListener('click', function(){ state.dashDate = ''; renderDashboard(); });
+  }
+
+  /* ============================= MAP TAP DISAMBIGUATION ============================= */
+  // When several clients sit close together on screen (same city, or not
+  // zoomed in enough yet to fully separate them), tapping one opens a small
+  // picker listing all the nearby ones instead of guessing which was meant.
+  var PICK_RADIUS_SVG = 9;
+  function screenPosOf(c, bounds){
+    var p = project(c.lat, c.lng, bounds);
+    return { x: mapView.scale*p.x + mapView.tx, y: mapView.scale*p.y + mapView.ty, world:p };
+  }
+  function handleDotTap(ref){
+    var target = byRef[ref];
+    if(!target) return;
+    var bounds = currentBounds();
+    var tp = screenPosOf(target, bounds);
+    var nearby = filteredClients().filter(function(c){
+      var sp = screenPosOf(c, bounds);
+      return Math.hypot(sp.x-tp.x, sp.y-tp.y) <= PICK_RADIUS_SVG;
+    });
+    if(nearby.length > 1){
+      openPicker(nearby, ref);
+    } else {
+      openSheet(ref);
+    }
+  }
+
+  function photoFieldHtml(slot, label){
+    return '<label>'+esc(label)+'</label>'+
+      '<div class="photo-field">'+
+      '<input type="file" accept="image/*" capture="environment" id="f-photo-'+slot+'" style="display:none;">'+
+      '<button type="button" class="btn" id="f-photo-'+slot+'-btn">Ajouter une photo</button>'+
+      '<span class="photo-status" id="f-photo-'+slot+'-status" hidden></span>'+
+      '<div class="photo-preview" id="f-photo-'+slot+'-preview" hidden>'+
+        '<img src="" alt="'+esc(label)+'">'+
+        '<button type="button" class="photo-remove" aria-label="Retirer la photo">✕</button>'+
+      '</div>'+
+      '</div>';
+  }
+
+  /* ============================= SHEET (detail) ============================= */
+  function openSheet(ref){
+    state.selectedRef = ref;
+    renderSheet(ref);
+    document.getElementById('scrim').classList.add('open');
+    document.getElementById('sheet').classList.add('open');
+    if(state.view === 'map') renderMap();
+  }
+  function openPicker(list, highlightRef){
+    list = list.slice().sort(function(a,b){ return a.n.localeCompare(b.n,'fr'); });
+    var html = '<div class="sheet-head"><span class="sheet-title">'+list.length+' clients ici</span>'+
+      '<button class="sheet-close" id="sheet-close" type="button" aria-label="Fermer">✕</button></div>'+
+      '<div class="empty-hint" style="padding-top:2px;">Ces points de vente sont trop proches pour être distingués sur la carte à ce niveau de zoom. Choisis celui qui t\'intéresse, ou zoome davantage.</div>'+
+      '<div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">';
+    list.forEach(function(c){
+      var status = clientStatus(c.r);
+      var lv = lastVisit(c.r);
+      html += '<button class="card" data-ref="'+c.r+'" type="button" style="'+(c.r===highlightRef?'border-color:var(--primary);':'')+'">'+
+        '<span class="status-dot" style="background:var('+statusColorVar(status)+')"></span>'+
+        '<span class="card-body">'+
+          '<span class="card-title">'+esc(c.n)+'</span>'+
+          '<span class="card-sub">'+esc(c.c)+(c.k?' · '+esc(c.k):'')+'</span>'+
+          '<span class="card-meta">'+(lv ? 'Dernière visite '+fmtRelative(lv.date) : 'Pas encore visité')+'</span>'+
+        '</span><span class="chev">›</span></button>';
+    });
+    html += '</div>';
+    document.getElementById('sheet-scroll').innerHTML = html;
+    document.getElementById('sheet-close').addEventListener('click', closeSheet);
+    document.querySelectorAll('#sheet-scroll .card').forEach(function(card){
+      card.addEventListener('click', function(){ openSheet(card.getAttribute('data-ref')); });
+    });
+    state.selectedRef = null;
+    document.getElementById('scrim').classList.add('open');
+    document.getElementById('sheet').classList.add('open');
+  }
+  /* ============================= SEARCH DROPDOWN ============================= */
+  function hideSearchDropdown(){
+    document.getElementById('search-dropdown').hidden = true;
+  }
+  function positionSearchDropdown(){
+    var input = document.getElementById('search-input');
+    var dd = document.getElementById('search-dropdown');
+    var r = input.getBoundingClientRect();
+    dd.style.left = r.left + 'px';
+    dd.style.top = (r.bottom + 6) + 'px';
+    dd.style.width = r.width + 'px';
+  }
+  function renderSearchDropdown(){
+    var dd = document.getElementById('search-dropdown');
+    var q = state.search.trim();
+    if(state.view !== 'map' || !q){ dd.hidden = true; return; }
+    var matches = filteredClients().slice().sort(function(a,b){ return a.n.localeCompare(b.n,'fr'); });
+    var cap = 30;
+    var html = '';
+    if(matches.length === 0){
+      html = '<div class="sd-hint">Aucun client trouvé.</div>';
+    } else {
+      matches.slice(0,cap).forEach(function(c){
+        var status = clientStatus(c.r);
+        var lv = lastVisit(c.r);
+        html += '<button class="sd-row" type="button" data-ref="'+c.r+'">'+
+          '<span class="status-dot" style="background:var('+statusColorVar(status)+')"></span>'+
+          '<span class="sd-body">'+
+            '<span class="sd-title">'+esc(c.n)+'</span>'+
+            '<span class="sd-sub">'+esc(c.c)+(lv?' · '+fmtRelative(lv.date):' · Pas encore visité')+'</span>'+
+          '</span></button>';
+      });
+      if(matches.length > cap){
+        html += '<div class="sd-more">+ '+(matches.length-cap)+' autres résultats…</div>';
+      }
+    }
+    dd.innerHTML = html;
+    dd.hidden = false;
+    positionSearchDropdown();
+    dd.querySelectorAll('.sd-row').forEach(function(row){
+      row.addEventListener('click', function(){
+        var ref = row.getAttribute('data-ref');
+        dd.hidden = true;
+        openSheet(ref);
+      });
+    });
+  }
+  function closeSheet(){
+    state.selectedRef = null;
+    document.getElementById('scrim').classList.remove('open');
+    document.getElementById('sheet').classList.remove('open');
+    if(state.view === 'map') renderMap();
+  }
+  function renderSheet(ref){
+    var c = byRef[ref];
+    if(!c) return;
+    var status = clientStatus(ref);
+    var visits = visitsByRef[ref] || [];
+    var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(c.a + ', ' + c.p + ' ' + c.c);
+    var html = '';
+    html += '<div class="sheet-head">'+
+      '<span class="sheet-title">'+esc(c.n)+'</span>'+
+      '<button class="sheet-close" id="sheet-close" type="button" aria-label="Fermer">✕</button>'+
+    '</div>';
+    html += '<span class="sheet-status" style="background:var('+statusColorVar(status)+'-soft, var(--surface-2)); color:var('+statusColorVar(status)+')">'+
+      '<span style="width:6px;height:6px;border-radius:50%;background:var('+statusColorVar(status)+')"></span>'+statusLabel(status)+
+    '</span>';
+    html += '<div class="sheet-addr">'+esc(c.a)+'<br>'+esc(c.p)+' '+esc(c.c)+'</div>';
+    html += '<div class="sheet-actions">'+
+      '<a class="btn accent" href="'+mapsUrl+'" target="_blank" rel="noopener">Itinéraire</a>'+
+    '</div>';
+    html += '<div class="info-grid">'+
+      '<div class="info-row"><span class="k">Référence</span><span class="v tabular">'+esc(c.r)+'</span></div>'+
+      (c.k ? '<div class="info-row"><span class="k">Contact</span><span class="v">'+esc(c.k)+'</span></div>' : '')+
+      (c.t ? '<div class="info-row"><span class="k">Téléphone</span><span class="v copy-row"><span class="tabular" style="-webkit-user-select:text;user-select:text;">'+esc(c.t)+'</span><button class="copy-btn" data-copy="'+esc(c.t)+'" type="button" title="Copier">Copier</button></span></div>' : '')+
+      (c.e ? '<div class="info-row"><span class="k">Email</span><span class="v copy-row"><span style="-webkit-user-select:text;user-select:text; word-break:break-all;">'+esc(c.e)+'</span><button class="copy-btn" data-copy="'+esc(c.e)+'" type="button" title="Copier">Copier</button></span></div>' : '')+
+    '</div>';
+
+    html += '<hr class="sep">';
+    html += '<h2 class="section-title">Nouveau compte rendu</h2>';
+    html += '<div class="form">'+
+      '<label for="f-commercial">Commercial</label>'+
+      '<input type="text" id="f-commercial" value="'+esc(state.commercial)+'" placeholder="Ton nom">'+
+      '<div class="form-row">'+
+        '<div><label for="f-date">Date de visite</label><input type="date" id="f-date" value="'+todayISO()+'"></div>'+
+      '</div>'+
+      '<label for="f-notes">Compte rendu</label>'+
+      '<textarea id="f-notes" placeholder="Accueil, commande, remarques, prochaine étape…"></textarea>'+
+      photoFieldHtml('store','Photo du magasin')+
+      photoFieldHtml('shelf','Photo du rayon')+
+      '<button class="btn primary block" id="f-save" type="button" style="margin-top:14px;">Enregistrer la visite</button>'+
+      '<div id="f-msg"></div>'+
+    '</div>';
+
+    html += '<hr class="sep">';
+    html += '<h2 class="section-title">Historique ('+visits.length+')</h2>';
+    if(visits.length){
+      html += '<div class="visit-log">';
+      visits.forEach(function(v){
+        var photosHtml = '';
+        if(v.photoStore || v.photoShelf){
+          photosHtml = '<div class="visit-photos">'+
+            (v.photoStore ? '<a href="'+v.photoStore.dataUrl+'" target="_blank" rel="noopener" title="Photo du magasin"><img src="'+v.photoStore.dataUrl+'" alt="Photo du magasin"></a>' : '')+
+            (v.photoShelf ? '<a href="'+v.photoShelf.dataUrl+'" target="_blank" rel="noopener" title="Photo du rayon"><img src="'+v.photoShelf.dataUrl+'" alt="Photo du rayon"></a>' : '')+
+          '</div>';
+        }
+        html += '<div class="visit-entry">'+
+          '<div class="vtop"><span>'+esc(v.commercial||'Non renseigné')+(v.synced===false?' <span class="pending-tag">· en attente</span>':'')+'</span><span class="d">'+fmtDate(v.date)+'</span></div>'+
+          (v.notes ? '<div class="vnotes">'+esc(v.notes)+'</div>' : '')+
+          photosHtml+
+        '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="empty-hint">Aucune visite enregistrée pour ce client.</div>';
+    }
+
+    document.getElementById('sheet-scroll').innerHTML = html;
+    document.getElementById('sheet-close').addEventListener('click', closeSheet);
+    document.getElementById('f-save').addEventListener('click', function(){ submitVisit(ref); });
+    document.querySelectorAll('.copy-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var text = btn.getAttribute('data-copy');
+        var done = function(){
+          var prev = btn.textContent;
+          btn.textContent = 'Copié';
+          btn.classList.add('copied');
+          setTimeout(function(){ btn.textContent = prev; btn.classList.remove('copied'); }, 1400);
+        };
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(text).then(done).catch(function(){});
+        }
+      });
+    });
+    wirePhotoInputs(ref);
+  }
+
+  function submitVisit(ref){
+    var c = byRef[ref];
+    var commercial = document.getElementById('f-commercial').value.trim();
+    var date = document.getElementById('f-date').value || todayISO();
+    var notes = document.getElementById('f-notes').value.trim();
+    var msgEl = document.getElementById('f-msg');
+    if(!commercial){
+      msgEl.className = 'form-msg err';
+      msgEl.textContent = 'Indique le nom du commercial avant d\'enregistrer.';
+      msgEl.style.display='block';
+      return;
+    }
+    state.commercial = commercial;
+    try{ localStorage.setItem('snm_commercial_name', commercial); }catch(e){}
+    renderMeChip();
+
+    var saveBtn = document.getElementById('f-save');
+    saveBtn.disabled = true;
+    var hasPhotos = (photoState.store && photoState.store.blob) || (photoState.shelf && photoState.shelf.blob);
+    saveBtn.textContent = hasPhotos ? 'Envoi des photos…' : 'Enregistrement…';
+
+    uploadPendingPhotos().then(function(photos){
+      saveBtn.textContent = 'Enregistrement…';
+      return saveVisit(ref, c.n, commercial, date, notes, photos);
+    }).then(function(res){
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Enregistrer la visite';
+      msgEl.style.display='block';
+      if(res.synced){
+        msgEl.className = 'form-msg ok';
+        msgEl.textContent = 'Compte rendu enregistré et synchronisé.';
+      } else {
+        msgEl.className = 'form-msg local';
+        msgEl.textContent = 'Compte rendu enregistré sur cet appareil (sera synchronisé dès que possible).';
+      }
+      refreshVisitsAndRender();
+    });
+  }
+
+  /* ============================= VIEW SWITCHING ============================= */
+  function switchView(v){
+    state.view = v;
+    document.querySelectorAll('nav.tabs button').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-view')===v);
+    });
+    document.querySelectorAll('.view').forEach(function(el){ el.classList.remove('active'); });
+    document.getElementById('view-'+v).classList.add('active');
+    hideSearchDropdown();
+    renderCurrentView();
+  }
+  function renderCurrentView(){
+    if(state.view==='map') renderMap();
+    else if(state.view==='list') renderList();
+    else if(state.view==='dashboard') renderDashboard();
+  }
+
+  function renderMeChip(){
+    document.getElementById('me-name').textContent = state.commercial || 'Choisir mon nom';
+  }
+
+  /* ============================= WIRING ============================= */
+  document.querySelectorAll('nav.tabs button').forEach(function(b){
+    b.addEventListener('click', function(){ switchView(b.getAttribute('data-view')); });
+  });
+  document.querySelectorAll('.filterbar .chip').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.filterbar .chip').forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      state.status = b.getAttribute('data-status');
+      renderCurrentView();
+    });
+  });
+  document.getElementById('search-input').addEventListener('input', debounce(function(e){
+    state.search = e.target.value;
+    renderCurrentView();
+    renderSearchDropdown();
+  }, 120));
+  document.getElementById('search-input').addEventListener('focus', function(){
+    renderSearchDropdown();
+  });
+  document.addEventListener('click', function(e){
+    var dd = document.getElementById('search-dropdown');
+    if(dd.hidden) return;
+    if(e.target.closest('#search-dropdown') || e.target.closest('#search-input')) return;
+    dd.hidden = true;
+  });
+  window.addEventListener('resize', function(){
+    var dd = document.getElementById('search-dropdown');
+    if(!dd.hidden) positionSearchDropdown();
+  });
+  document.getElementById('scrim').addEventListener('click', closeSheet);
+  document.getElementById('btn-extent-region').addEventListener('click', function(){
+    state.extent='region';
+    this.classList.add('active');
+    document.getElementById('btn-extent-all').classList.remove('active');
+    mapView.scale=1; mapView.tx=0; mapView.ty=0;
+    renderMap();
+  });
+  document.getElementById('btn-extent-all').addEventListener('click', function(){
+    state.extent='all';
+    this.classList.add('active');
+    document.getElementById('btn-extent-region').classList.remove('active');
+    mapView.scale=1; mapView.tx=0; mapView.ty=0;
+    renderMap();
+  });
+  document.getElementById('me-chip').addEventListener('click', function(){
+    var name = prompt('Ton nom (utilisé pour signer tes comptes rendus) :', state.commercial || '');
+    if(name !== null){
+      state.commercial = name.trim();
+      try{ localStorage.setItem('snm_commercial_name', state.commercial); }catch(e){}
+      renderMeChip();
+    }
+  });
+
+  /* ============================= BOOT ============================= */
+  renderMeChip();
+  renderCounts();
+  renderCurrentView();
+  updateSyncBanner();
+  initCapabilities();
+  initMapGestures();
+})();
+</script>
+</body>
+</html>
