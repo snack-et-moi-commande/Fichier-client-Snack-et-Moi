@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
 <style>
   :root{
@@ -433,7 +434,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v22</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v23</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -721,6 +722,50 @@ const db = getFirestore(fbApp);
 
   var DUE_DAYS = 60; // seuil "à relancer"
   var COMMERCIALS = ['Antton', 'Léan'];
+
+  /* ---------- envoi du catalogue par e-mail (EmailJS) ---------- */
+  // À REMPLIR une fois le compte EmailJS créé (Service ID, Template ID,
+  // Public Key — voir Account > General et Email Services/Templates sur
+  // emailjs.com). Tant que EMAILJS_PUBLIC_KEY vaut 'A_REMPLACER', le bouton
+  // affiche un message d'erreur clair plutôt que de planter.
+  var EMAILJS_PUBLIC_KEY = 'A_REMPLACER';
+  var EMAILJS_SERVICE_ID = 'A_REMPLACER';
+  var EMAILJS_TEMPLATE_ID = 'A_REMPLACER';
+  var SITE_BASE_URL = 'https://snack-et-moi-commande.github.io/Fichier-client-Snack-et-Moi/';
+  var CATALOG_URL = SITE_BASE_URL + 'docs/catalogue-snack-et-moi.pdf';
+  var ORDER_FORM_URL = SITE_BASE_URL + 'docs/bon-de-commande-snack-et-moi.xlsx';
+  var emailjsReady = false;
+  if(window.emailjs && EMAILJS_PUBLIC_KEY !== 'A_REMPLACER'){
+    try{ emailjs.init({publicKey: EMAILJS_PUBLIC_KEY}); emailjsReady = true; }catch(err){}
+  }
+
+  window.sendCatalogEmail = function(ref){
+    var c = byRef[ref];
+    if(!c || !c.e) return;
+    var btn = document.getElementById('send-catalog-btn');
+    var msgEl = document.getElementById('send-catalog-msg');
+    if(!emailjsReady){
+      if(msgEl){ msgEl.className = 'form-msg err'; msgEl.style.display='block'; msgEl.textContent = 'Envoi non configuré — il manque encore les identifiants EmailJS.'; }
+      return;
+    }
+    if(btn){ btn.disabled = true; btn.textContent = 'Envoi en cours…'; }
+    if(msgEl){ msgEl.style.display = 'none'; }
+    var params = {
+      to_email: c.e,
+      to_name: c.n,
+      contact_name: c.k || '',
+      catalog_url: CATALOG_URL,
+      order_url: ORDER_FORM_URL,
+      commercial: state.commercial || ''
+    };
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params).then(function(){
+      if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le catalogue par e-mail'; }
+      if(msgEl){ msgEl.className = 'form-msg ok'; msgEl.style.display='block'; msgEl.textContent = 'E-mail envoyé à '+c.e+'.'; }
+    }).catch(function(){
+      if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le catalogue par e-mail'; }
+      if(msgEl){ msgEl.className = 'form-msg err'; msgEl.style.display='block'; msgEl.textContent = 'Échec de l\'envoi — vérifie ta connexion et réessaie.'; }
+    });
+  };
 
   window.openNewProspectSheet = function(){
     state.selectedRef = null;
@@ -1816,6 +1861,12 @@ const db = getFirestore(fbApp);
       '<button type="button" class="btn" onclick="toggleAddressEdit()">Modifier l\'adresse</button>'+
       '<button type="button" class="btn danger" onclick="deleteClient(\''+ref.replace(/'/g,"\\'")+'\')">Supprimer ce client</button>'+
     '</div>';
+    if(c.e){
+      html += '<div class="sheet-actions" style="margin-top:8px;">'+
+        '<button type="button" class="btn primary block" id="send-catalog-btn" onclick="sendCatalogEmail(\''+ref.replace(/'/g,"\\'")+'\')">Envoyer le catalogue par e-mail</button>'+
+      '</div>'+
+      '<div id="send-catalog-msg" class="form-msg" style="display:none;"></div>';
+    }
     html += '<div class="form" id="edit-addr-box" hidden style="margin-top:10px;">'+
       '<label for="edit-addr">Adresse (numéro et rue)</label>'+
       '<input type="text" id="edit-addr" value="'+esc(c.a)+'" placeholder="Adresse du magasin, pas du siège">'+
