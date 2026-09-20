@@ -326,7 +326,7 @@
   .sheet{
     position:fixed; left:0; right:0; bottom:0; z-index:40;
     background:var(--surface); border-radius:16px 16px 0 0; box-shadow:0 -8px 30px rgba(0,0,0,.2);
-    max-height:88svh; display:flex; flex-direction:column;
+    max-height:88svh; display:flex; flex-direction:column; overflow-x:hidden;
     transform:translateY(100%); transition:transform .2s ease;
     padding-bottom:env(safe-area-inset-bottom,0px);
   }
@@ -434,7 +434,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v28</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v29</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -1755,11 +1755,30 @@ const db = getFirestore(fbApp);
   }
 
   /* ============================= SHEET (detail) ============================= */
+  function lockSheetWidth(){
+    // Filet de sécurité : sur certains téléphones, la fiche (position:fixed
+    // avec left/right:0) peut se retrouver plus large que l'écran réellement
+    // visible (selon des réglages d'affichage propres à l'appareil), ce qui
+    // fait déborder les boutons et champs sur la droite sans qu'aucune règle
+    // CSS interne ne le corrige. On fixe donc explicitement sa largeur en
+    // pixels réels à chaque ouverture, ce qui ne peut pas être contourné.
+    var sheetEl = document.getElementById('sheet');
+    if(!sheetEl) return;
+    if(window.matchMedia && window.matchMedia('(min-width:720px)').matches){
+      sheetEl.style.width = ''; sheetEl.style.left = ''; sheetEl.style.right = '';
+      return;
+    }
+    var w = document.documentElement.clientWidth || window.innerWidth;
+    sheetEl.style.width = w + 'px';
+    sheetEl.style.left = '0';
+    sheetEl.style.right = 'auto';
+  }
   function openSheet(ref){
     state.selectedRef = ref;
     renderSheet(ref);
     document.getElementById('scrim').classList.add('open');
     document.getElementById('sheet').classList.add('open');
+    lockSheetWidth();
     if(state.view === 'map') renderMap();
   }
   function openPicker(list, highlightRef){
