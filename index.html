@@ -433,7 +433,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v21</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v22</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -1352,7 +1352,18 @@ const db = getFirestore(fbApp);
       delete pointers[e.pointerId];
       var n = ids().length;
       if(n === 0){
-        if(totalMove > 6){ suppressClick = true; setTimeout(function(){ suppressClick = false; }, 0); }
+        if(totalMove > 6){
+          suppressClick = true; setTimeout(function(){ suppressClick = false; }, 0);
+        } else if(e.type === 'pointerup'){
+          // Tap (not a drag). `wrap` holds pointer capture (set on pointerdown
+          // below), which browsers use to retarget this pointer's events —
+          // e.target here is `wrap` itself, not the dot under the cursor, so
+          // we can't rely on it (this is what made desktop clicks on a map
+          // dot silently do nothing). Hit-test the real cursor position instead.
+          var hit = document.elementFromPoint(e.clientX, e.clientY);
+          var dotEl = hit && hit.closest ? hit.closest('.map-dot') : null;
+          if(dotEl) handleDotTap(dotEl.getAttribute('data-ref'));
+        }
         mode = null;
       } else if(n === 1){
         // transition from pinch back to pan with the remaining finger
@@ -1496,7 +1507,10 @@ const db = getFirestore(fbApp);
     svg.innerHTML = '<g id="map-g">' + parts.join('') + '</g>';
     applyTransform();
     svg.querySelectorAll('.map-dot').forEach(function(el){
-      el.addEventListener('click', function(){ handleDotTap(el.getAttribute('data-ref')); });
+      // Tapping is handled centrally in initMapGestures() (via pointerup +
+      // elementFromPoint), because pointer capture on the map wrapper can
+      // retarget the click event away from this element. Keep keyboard
+      // activation here since it's unaffected by pointer capture.
       el.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); handleDotTap(el.getAttribute('data-ref')); } });
     });
 
