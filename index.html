@@ -115,6 +115,16 @@
     max-width:100%;
     padding-inline:0;
   }
+  /* Sur grand écran (ordinateur, présentation sur télé), l'appli reste
+     dans une colonne à largeur de téléphone plutôt que de s'étirer sur
+     toute la largeur — sinon la carte et ses points grossissent trop. */
+  @media (min-width:720px){
+    body{ background:var(--surface-2); }
+    #app{
+      max-width:480px; margin:0 auto; min-height:100vh;
+      box-shadow:0 0 0 1px var(--border), var(--shadow);
+    }
+  }
   button{font-family:inherit;font-size:inherit;color:inherit;}
   input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;}
   button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,a:focus-visible{
@@ -310,7 +320,11 @@
   }
   .sheet.open{transform:translateY(0);}
   @media (min-width:720px){
-    .sheet{ left:auto; right:16px; bottom:16px; width:400px; border-radius:16px; max-height:calc(100svh - 32px); }
+    .sheet{
+      left:50%; right:auto; bottom:16px; width:420px; border-radius:16px;
+      max-height:calc(100svh - 32px); transform:translate(-50%,120%);
+    }
+    .sheet.open{ transform:translate(-50%,0); }
   }
   .sheet-handle{width:36px;height:4px;border-radius:3px;background:var(--border);margin:9px auto 2px; flex:none;}
   .sheet-scroll{overflow-y:auto; padding:6px 18px 18px;}
@@ -394,7 +408,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v15</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v17</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -514,6 +528,33 @@ const db = getFirestore(fbApp);
     });
   }
 
+  function titleCaseCity(s){
+    return String(s||'').toLowerCase().replace(/(^|[\s'-])([a-zà-ÿ])/g, function(m, sep, ch){ return sep + ch.toUpperCase(); });
+  }
+  // Étiquettes de ville générées à partir des clients eux-mêmes (plutôt que
+  // d'une liste figée) : chaque ville où il y a au moins un client obtient
+  // une étiquette sur la carte, même les petites communes non répertoriées
+  // à la main dans LANDMARKS (ex. villages des Landes).
+  var CLIENT_CITY_LABELS = [];
+  function buildClientCityLabels(){
+    var groups = {};
+    CLIENTS.forEach(function(c){
+      var key = (c.c||'').trim().toUpperCase();
+      if(!key) return;
+      (groups[key] = groups[key] || []).push(c);
+    });
+    var known = LANDMARKS.map(function(l){ return l.n.trim().toUpperCase(); });
+    var labels = [];
+    Object.keys(groups).forEach(function(key){
+      if(known.indexOf(key) !== -1) return; // déjà couvert par un repère existant
+      var arr = groups[key];
+      var sumLat=0, sumLng=0;
+      arr.forEach(function(c){ sumLat+=c.lat; sumLng+=c.lng; });
+      labels.push({n: titleCaseCity(key), lat: sumLat/arr.length, lng: sumLng/arr.length});
+    });
+    CLIENT_CITY_LABELS = labels;
+  }
+
   function rebuildClients(){
     var list = [];
     ALL_CLIENTS_BASE.forEach(function(base){
@@ -550,6 +591,7 @@ const db = getFirestore(fbApp);
         clientOverrides = map;
         overridesFbReady = true;
         rebuildClients();
+        buildClientCityLabels();
         refreshVisitsAndRender();
       }, function(err){ overridesFbReady = false; });
     } catch(e){}
@@ -651,6 +693,7 @@ const db = getFirestore(fbApp);
     {n:"Tours", lat:47.3941, lng:0.6848},
     {n:"Avignon", lat:43.9493, lng:4.8055}
   ];
+  buildClientCityLabels();
 
   /* approximate Atlantic coastline, north (Gironde) to south (Bilbao) —
      schematic, for visual orientation only, not survey-accurate */
@@ -1249,7 +1292,7 @@ const db = getFirestore(fbApp);
 
     // landmarks — counter-scaled like client dots, so their pin stays put at
     // the right spot and their label doesn't balloon (and drift off-center) on zoom
-    LANDMARKS.forEach(function(l){
+    LANDMARKS.concat(CLIENT_CITY_LABELS).forEach(function(l){
       var p = project(l.lat, l.lng, bounds);
       if(p.x<-10||p.x>VB_W+10||p.y<-10||p.y>VB_H+10) return;
       parts.push(
