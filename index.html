@@ -24,6 +24,8 @@
     --primary-soft:#e2ead9;
     --accent:#c1442d;
     --accent-soft:#f6e2d6;
+    --prospect:#2f8fd1;
+    --prospect-soft:#dcecf8;
     --warn:#a9700f;
     --warn-soft:#f5e6c7;
     --good:#2f7a4f;
@@ -55,6 +57,8 @@
       --primary-soft:#26362a;
       --accent:#e38863;
       --accent-soft:#3a2a22;
+      --prospect:#7db8e8;
+      --prospect-soft:#1f2e38;
       --warn:#e3b15a;
       --warn-soft:#3a3120;
       --good:#7cc696;
@@ -83,6 +87,8 @@
     --primary-soft:#26362a;
     --accent:#e38863;
     --accent-soft:#3a2a22;
+    --prospect:#7db8e8;
+    --prospect-soft:#1f2e38;
     --warn:#e3b15a;
     --warn-soft:#3a3120;
     --good:#7cc696;
@@ -234,6 +240,11 @@
   }
   .map-note a{color:var(--accent); font-weight:600;}
   .map-dot{cursor:pointer;}
+  /* Le contour de focus du navigateur suit la transformation de zoom du
+     point (dot-inv-scale) et peut devenir énorme à certains niveaux de
+     zoom — le point sélectionné a déjà son propre indicateur visuel
+     (halo), donc on désactive ce contour par défaut. */
+  .map-dot:focus, .map-dot:focus-visible{ outline:none; }
   .map-dot circle.halo{opacity:0;}
   .map-dot.selected circle.halo{opacity:1;}
   /* counter-scales dots against the pan/zoom transform, so zooming in spreads
@@ -335,6 +346,20 @@
   .sheet-addr{font-size:13px; color:var(--ink-soft); margin-top:8px;}
   .sheet-actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
   .sheet-actions > .btn{flex:1 1 auto; min-width:0; white-space:normal; text-align:center; justify-content:center;}
+  .fab{
+    position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:35;
+    width:52px; height:52px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--primary); color:var(--primary-ink); font-size:28px; line-height:1;
+    box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center;
+  }
+  @media (min-width:720px){
+    .fab{ left:calc(50% + 172px); right:auto; }
+  }
+  .prospect-badge{
+    display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase;
+    color:var(--prospect); background:var(--prospect-soft);
+    border-radius:5px; padding:2px 6px; margin-left:6px; vertical-align:middle;
+  }
   .btn{
     border-radius:9px; padding:9px 13px; font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--border);
     background:var(--surface); color:var(--ink); display:inline-flex; align-items:center; gap:6px; text-decoration:none;
@@ -408,7 +433,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v17</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v21</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -429,6 +454,7 @@
   </div>
 
   <div id="sync-banner" class="sync-banner" hidden></div>
+  <button type="button" id="fab-new-prospect" class="fab" title="Ajouter un prospect" onclick="openNewProspectSheet()">+</button>
 
   <main>
     <section class="view active" id="view-map">
@@ -442,6 +468,7 @@
           <div class="row"><span class="dot" style="background:var(--danger)"></span>Pas encore visité</div>
           <div class="row"><span class="dot" style="background:var(--warn)"></span>À relancer</div>
           <div class="row"><span class="dot" style="background:var(--good)"></span>Suivi actif</div>
+          <div class="row"><span class="dot" style="background:var(--prospect)"></span>Prospect</div>
         </div>
         <div class="map-note" id="map-note" hidden></div>
         <div class="zoom-controls">
@@ -555,6 +582,12 @@ const db = getFirestore(fbApp);
     CLIENT_CITY_LABELS = labels;
   }
 
+  // Prospects : magasins ajoutés à la main sur le terrain, pas dans le
+  // fichier client d'origine. Stockés dans Firestore (collection
+  // "prospects") et fusionnés ici avec les clients pour apparaître sur
+  // la carte, la liste et l'export comme n'importe quel point de vente.
+  var prospects = {}; // ref -> {n,a,p,c,k,t,e,lat,lng,createdAt}
+
   function rebuildClients(){
     var list = [];
     ALL_CLIENTS_BASE.forEach(function(base){
@@ -567,6 +600,18 @@ const db = getFirestore(fbApp);
         lat: (ov.lat != null ? ov.lat : base.lat),
         lng: (ov.lng != null ? ov.lng : base.lng)
       }) : Object.assign({}, base);
+      list.push(c);
+    });
+    Object.keys(prospects).forEach(function(ref){
+      var ov = clientOverrides[ref];
+      if(ov && ov.deleted) return; // prospect supprimé, on l'exclut
+      var p = prospects[ref];
+      var c = {
+        r: ref, n: p.n, a: (ov && ov.a != null ? ov.a : p.a), p: (ov && ov.p != null ? ov.p : p.p),
+        c: (ov && ov.c != null ? ov.c : p.c), t: p.t||'', k: p.k||'', e: p.e||'',
+        lat: (ov && ov.lat != null ? ov.lat : p.lat), lng: (ov && ov.lng != null ? ov.lng : p.lng),
+        x: false, isProspect: true
+      };
       list.push(c);
     });
     jitterCoincidentClients(list);
@@ -594,6 +639,23 @@ const db = getFirestore(fbApp);
         buildClientCityLabels();
         refreshVisitsAndRender();
       }, function(err){ overridesFbReady = false; });
+    } catch(e){}
+  }
+
+  /* ============================= PROSPECTS ============================= */
+  // Magasins ajoutés manuellement sur le terrain (pas encore clients),
+  // avec leur premier compte rendu de visite. Stockés à part dans Firestore
+  // (collection "prospects") puis fusionnés dans CLIENTS par rebuildClients().
+  function initProspects(){
+    try{
+      onSnapshot(collection(db, 'prospects'), function(snap){
+        var map = {};
+        snap.forEach(function(d){ map[d.id] = d.data() || {}; });
+        prospects = map;
+        rebuildClients();
+        buildClientCityLabels();
+        refreshVisitsAndRender();
+      }, function(err){});
     } catch(e){}
   }
 
@@ -659,6 +721,101 @@ const db = getFirestore(fbApp);
 
   var DUE_DAYS = 60; // seuil "à relancer"
   var COMMERCIALS = ['Antton', 'Léan'];
+
+  window.openNewProspectSheet = function(){
+    state.selectedRef = null;
+    var html = '<div class="sheet-head">'+
+      '<span class="sheet-title">Nouveau prospect</span>'+
+      '<button class="sheet-close" id="sheet-close" type="button" aria-label="Fermer">✕</button>'+
+    '</div>'+
+    '<div class="empty-hint" style="padding-top:2px;">Magasin visité qui n\'est pas encore client. Il apparaîtra sur la carte et dans la liste, avec ce premier compte rendu.</div>'+
+    '<div class="form" style="margin-top:10px;">'+
+      '<label for="np-name">Nom du magasin</label>'+
+      '<input type="text" id="np-name" placeholder="Enseigne du prospect">'+
+      '<label for="np-addr">Adresse</label>'+
+      '<input type="text" id="np-addr" placeholder="Numéro et rue">'+
+      '<div class="form-row">'+
+        '<div><label for="np-postal">Code postal</label><input type="text" id="np-postal"></div>'+
+        '<div><label for="np-city">Ville</label><input type="text" id="np-city"></div>'+
+      '</div>'+
+      '<label for="np-contact">Contact</label>'+
+      '<input type="text" id="np-contact" placeholder="Nom du contact (optionnel)">'+
+      '<div class="form-row">'+
+        '<div><label for="np-phone">Téléphone</label><input type="text" id="np-phone"></div>'+
+        '<div><label for="np-email">Email</label><input type="text" id="np-email"></div>'+
+      '</div>'+
+      '<label for="np-commercial">Merchandiser / Commercial</label>'+
+      '<select id="np-commercial">'+
+        '<option value="">Choisir…</option>'+
+        COMMERCIALS.map(function(nm){ return '<option value="'+esc(nm)+'"'+(nm===state.commercial?' selected':'')+'>'+esc(nm)+'</option>'; }).join('')+
+      '</select>'+
+      '<div class="form-row">'+
+        '<div><label for="np-date">Date de visite</label><input type="date" id="np-date" value="'+todayISO()+'"></div>'+
+      '</div>'+
+      '<label for="np-notes">Compte rendu</label>'+
+      '<textarea id="np-notes" placeholder="Accueil, intérêt, prochaine étape…"></textarea>'+
+      '<button type="button" class="btn primary block" id="np-save" style="margin-top:14px;">Enregistrer le prospect</button>'+
+      '<div id="np-msg"></div>'+
+    '</div>';
+    document.getElementById('sheet-scroll').innerHTML = html;
+    document.getElementById('scrim').classList.add('open');
+    document.getElementById('sheet').classList.add('open');
+    document.getElementById('sheet-close').addEventListener('click', closeSheet);
+    document.getElementById('np-save').addEventListener('click', saveNewProspect);
+  };
+
+  function saveNewProspect(){
+    var name = document.getElementById('np-name').value.trim();
+    var addr = document.getElementById('np-addr').value.trim();
+    var postal = document.getElementById('np-postal').value.trim();
+    var city = document.getElementById('np-city').value.trim();
+    var contact = document.getElementById('np-contact').value.trim();
+    var phone = document.getElementById('np-phone').value.trim();
+    var email = document.getElementById('np-email').value.trim();
+    var commercial = document.getElementById('np-commercial').value.trim();
+    var date = document.getElementById('np-date').value || todayISO();
+    var notes = document.getElementById('np-notes').value.trim();
+    var msgEl = document.getElementById('np-msg');
+    var btn = document.getElementById('np-save');
+    if(!name || !addr || !city || !commercial){
+      msgEl.className = 'form-msg err'; msgEl.style.display='block';
+      msgEl.textContent = 'Nom du magasin, adresse, ville et commercial sont obligatoires.';
+      return;
+    }
+    state.commercial = commercial;
+    try{ localStorage.setItem('snm_commercial_name', commercial); }catch(e){}
+    renderMeChip();
+    btn.disabled = true; btn.textContent = 'Localisation en cours…';
+    msgEl.style.display='none';
+    geocodeAddress(addr, postal, city).then(function(coords){
+      var prospectData = {
+        n:name, a:addr, p:postal, c:city, k:contact, t:phone, e:email,
+        lat: coords ? coords.lat : 43.4, lng: coords ? coords.lng : -1.5,
+        createdAt: Date.now()
+      };
+      btn.textContent = 'Enregistrement…';
+      return addDoc(collection(db,'prospects'), prospectData).then(function(docRef){
+        var ref = docRef.id;
+        var visitPayload = { ref:ref, clientName:name, commercial:commercial, date:date, notes:notes, createdAt: Date.now() };
+        return addDoc(collection(db,'visites'), visitPayload).then(function(){
+          // mise à jour locale immédiate, sans attendre l'aller-retour Firestore
+          prospects[ref] = prospectData;
+          rebuildClients();
+          buildClientCityLabels();
+          lastDbDocs.push(Object.assign({id:'local'}, visitPayload));
+          refreshVisitsAndRender();
+          return ref;
+        });
+      });
+    }).then(function(ref){
+      openSheet(ref);
+    }).catch(function(){
+      btn.disabled = false; btn.textContent = 'Enregistrer le prospect';
+      msgEl.style.display='block';
+      msgEl.className = 'form-msg err';
+      msgEl.textContent = 'Échec de l\'enregistrement — vérifie ta connexion et réessaie.';
+    });
+  }
 
   /* reference landmarks for map orientation (not client data) */
   var LANDMARKS = [
@@ -1311,7 +1468,10 @@ const db = getFirestore(fbApp);
       var onscreen = p.x>=-6 && p.x<=VB_W+6 && p.y>=-6 && p.y<=VB_H+6;
       if(!onscreen){ if(visibleSet[c.r]) outlierCount++; return; }
       var status = clientStatus(c.r);
-      var colorVar = statusColorVar(status);
+      // Les prospects gardent une couleur à part (accent) plutôt que la
+      // couleur de statut de visite, pour rester repérables d'un coup d'œil
+      // au milieu des clients sur la carte.
+      var colorVar = c.isProspect ? '--prospect' : statusColorVar(status);
       var dim = !visibleSet[c.r];
       var sel = state.selectedRef === c.r;
       var r = sel ? 6.5 : 4.2;
@@ -1362,7 +1522,7 @@ const db = getFirestore(fbApp);
       html += '<button class="card" data-ref="'+c.r+'" type="button">'+
         '<span class="status-dot" style="background:var('+statusColorVar(status)+')"></span>'+
         '<span class="card-body">'+
-          '<span class="card-title">'+esc(c.n)+'</span>'+
+          '<span class="card-title">'+esc(c.n)+(c.isProspect?'<span class="prospect-badge">Prospect</span>':'')+'</span>'+
           '<span class="card-sub">'+esc(c.c)+(c.k?' · '+esc(c.k):'')+'</span>'+
           '<span class="card-meta">'+(lv ? 'Dernière visite '+fmtRelative(lv.date) : 'Pas encore visité')+'</span>'+
         '</span>'+
@@ -1392,6 +1552,7 @@ const db = getFirestore(fbApp);
       var c = refToClient[v.ref];
       return {
         'Date': v.date || '',
+        'Type': c && c.isProspect ? 'Prospect' : 'Client',
         'Enseigne': v.clientName || (c ? c.n : ''),
         'Ville': c ? c.c : '',
         'Référence client': v.ref || '',
@@ -1402,7 +1563,7 @@ const db = getFirestore(fbApp);
       };
     });
     var ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [{wch:12},{wch:30},{wch:18},{wch:14},{wch:14},{wch:50},{wch:12},{wch:12}];
+    ws['!cols'] = [{wch:12},{wch:10},{wch:30},{wch:18},{wch:14},{wch:14},{wch:50},{wch:12},{wch:12}];
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Visites');
     var today = new Date().toISOString().slice(0,10);
@@ -1553,7 +1714,7 @@ const db = getFirestore(fbApp);
       html += '<button class="card" data-ref="'+c.r+'" type="button" style="'+(c.r===highlightRef?'border-color:var(--primary);':'')+'">'+
         '<span class="status-dot" style="background:var('+statusColorVar(status)+')"></span>'+
         '<span class="card-body">'+
-          '<span class="card-title">'+esc(c.n)+'</span>'+
+          '<span class="card-title">'+esc(c.n)+(c.isProspect?'<span class="prospect-badge">Prospect</span>':'')+'</span>'+
           '<span class="card-sub">'+esc(c.c)+(c.k?' · '+esc(c.k):'')+'</span>'+
           '<span class="card-meta">'+(lv ? 'Dernière visite '+fmtRelative(lv.date) : 'Pas encore visité')+'</span>'+
         '</span><span class="chev">›</span></button>';
@@ -1629,7 +1790,7 @@ const db = getFirestore(fbApp);
     var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(c.a + ', ' + c.p + ' ' + c.c);
     var html = '';
     html += '<div class="sheet-head">'+
-      '<span class="sheet-title">'+esc(c.n)+'</span>'+
+      '<span class="sheet-title">'+esc(c.n)+(c.isProspect?'<span class="prospect-badge">Prospect</span>':'')+'</span>'+
       '<button class="sheet-close" id="sheet-close" type="button" aria-label="Fermer">✕</button>'+
     '</div>';
     html += '<span class="sheet-status" style="background:var('+statusColorVar(status)+'-soft, var(--surface-2)); color:var('+statusColorVar(status)+')">'+
@@ -1842,6 +2003,7 @@ const db = getFirestore(fbApp);
   updateSyncBanner();
   initCapabilities();
   initClientOverrides();
+  initProspects();
   initMapGestures();
 })();
 </script>
