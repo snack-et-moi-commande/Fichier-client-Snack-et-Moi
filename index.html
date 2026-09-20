@@ -98,6 +98,7 @@
   }
 
   *{box-sizing:border-box;}
+  html,body{overflow-x:hidden; max-width:100%;}
   body{
     background:var(--bg);
     color:var(--ink);
@@ -319,6 +320,7 @@
   .sheet-status{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:3px 9px 3px 7px; border-radius:100px; margin-top:7px;}
   .sheet-addr{font-size:13px; color:var(--ink-soft); margin-top:8px;}
   .sheet-actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  .sheet-actions > .btn{flex:1 1 auto; min-width:0; white-space:normal; text-align:center; justify-content:center;}
   .btn{
     border-radius:9px; padding:9px 13px; font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--border);
     background:var(--surface); color:var(--ink); display:inline-flex; align-items:center; gap:6px; text-decoration:none;
@@ -392,7 +394,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v14</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v15</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
