@@ -439,7 +439,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v33</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v34</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -604,7 +604,10 @@ const db = getFirestore(fbApp);
         p: (ov.p != null ? ov.p : base.p),
         c: (ov.c != null ? ov.c : base.c),
         lat: (ov.lat != null ? ov.lat : base.lat),
-        lng: (ov.lng != null ? ov.lng : base.lng)
+        lng: (ov.lng != null ? ov.lng : base.lng),
+        k: (ov.k != null ? ov.k : base.k),
+        t: (ov.t != null ? ov.t : base.t),
+        e: (ov.e != null ? ov.e : base.e)
       }) : Object.assign({}, base);
       list.push(c);
     });
@@ -614,7 +617,10 @@ const db = getFirestore(fbApp);
       var p = prospects[ref];
       var c = {
         r: ref, n: p.n, a: (ov && ov.a != null ? ov.a : p.a), p: (ov && ov.p != null ? ov.p : p.p),
-        c: (ov && ov.c != null ? ov.c : p.c), t: p.t||'', k: p.k||'', e: p.e||'',
+        c: (ov && ov.c != null ? ov.c : p.c),
+        t: (ov && ov.t != null ? ov.t : (p.t||'')),
+        k: (ov && ov.k != null ? ov.k : (p.k||'')),
+        e: (ov && ov.e != null ? ov.e : (p.e||'')),
         lat: (ov && ov.lat != null ? ov.lat : p.lat), lng: (ov && ov.lng != null ? ov.lng : p.lng),
         x: false, isProspect: true
       };
@@ -678,9 +684,13 @@ const db = getFirestore(fbApp);
     var addrEl = document.getElementById('edit-addr');
     var postalEl = document.getElementById('edit-postal');
     var cityEl = document.getElementById('edit-city');
+    var contactEl = document.getElementById('edit-contact');
+    var phoneEl = document.getElementById('edit-phone');
+    var emailEl = document.getElementById('edit-email');
     var msgEl = document.getElementById('edit-addr-msg');
     var btn = document.getElementById('edit-addr-save');
     var address = addrEl.value.trim(), postal = postalEl.value.trim(), city = cityEl.value.trim();
+    var contact = contactEl.value.trim(), phone = phoneEl.value.trim(), email = emailEl.value.trim();
     if(!address || !city){
       msgEl.textContent = 'Adresse et ville sont obligatoires.';
       msgEl.className = 'form-msg err'; msgEl.style.display='block';
@@ -688,21 +698,21 @@ const db = getFirestore(fbApp);
     }
     btn.disabled = true; btn.textContent = 'Localisation en cours…';
     geocodeAddress(address, postal, city).then(function(coords){
-      var payload = { a: address, p: postal, c: city, updatedAt: Date.now() };
+      var payload = { a: address, p: postal, c: city, k: contact, t: phone, e: email, updatedAt: Date.now() };
       if(coords){ payload.lat = coords.lat; payload.lng = coords.lng; }
       return setDoc(doc(db, 'client_overrides', ref), payload, {merge:true}).then(function(){ return coords; });
     }).then(function(coords){
-      btn.disabled = false; btn.textContent = 'Enregistrer la nouvelle adresse';
+      btn.disabled = false; btn.textContent = 'Enregistrer les coordonnées';
       msgEl.style.display='block';
       if(coords){
         msgEl.className = 'form-msg ok';
-        msgEl.textContent = 'Adresse et position mises à jour.';
+        msgEl.textContent = 'Coordonnées et position mises à jour.';
       } else {
         msgEl.className = 'form-msg local';
-        msgEl.textContent = 'Adresse enregistrée, mais le point sur la carte n\'a pas pu être repositionné automatiquement.';
+        msgEl.textContent = 'Coordonnées enregistrées, mais le point sur la carte n\'a pas pu être repositionné automatiquement.';
       }
     }).catch(function(){
-      btn.disabled = false; btn.textContent = 'Enregistrer la nouvelle adresse';
+      btn.disabled = false; btn.textContent = 'Enregistrer les coordonnées';
       msgEl.style.display='block';
       msgEl.className = 'form-msg err';
       msgEl.textContent = 'Échec de l\'enregistrement — vérifie ta connexion et réessaie.';
@@ -1927,7 +1937,7 @@ const db = getFirestore(fbApp);
     html += '<div class="sheet-addr">'+esc(c.a)+'<br>'+esc(c.p)+' '+esc(c.c)+'</div>';
     html += '<div class="sheet-actions">'+
       '<a class="btn accent" href="'+mapsUrl+'" target="_blank" rel="noopener">Itinéraire</a>'+
-      '<button type="button" class="btn" onclick="toggleAddressEdit()">Modifier l\'adresse</button>'+
+      '<button type="button" class="btn" onclick="toggleAddressEdit()">Modifier les coordonnées</button>'+
       '<button type="button" class="btn danger" onclick="deleteClient(\''+ref.replace(/'/g,"\\'")+'\')">Supprimer ce client</button>'+
     '</div>';
     if(c.e){
@@ -1943,7 +1953,13 @@ const db = getFirestore(fbApp);
         '<div><label for="edit-postal">Code postal</label><input type="text" id="edit-postal" value="'+esc(c.p)+'"></div>'+
         '<div><label for="edit-city">Ville</label><input type="text" id="edit-city" value="'+esc(c.c)+'"></div>'+
       '</div>'+
-      '<button type="button" class="btn primary block" id="edit-addr-save" style="margin-top:10px;" onclick="saveClientAddress(\''+ref.replace(/'/g,"\\'")+'\')">Enregistrer la nouvelle adresse</button>'+
+      '<label for="edit-contact">Contact</label>'+
+      '<input type="text" id="edit-contact" value="'+esc(c.k||'')+'" placeholder="Nom du contact">'+
+      '<div class="form-row">'+
+        '<div><label for="edit-phone">Téléphone</label><input type="text" id="edit-phone" value="'+esc(c.t||'')+'"></div>'+
+        '<div><label for="edit-email">Email</label><input type="email" id="edit-email" value="'+esc(c.e||'')+'"></div>'+
+      '</div>'+
+      '<button type="button" class="btn primary block" id="edit-addr-save" style="margin-top:10px;" onclick="saveClientAddress(\''+ref.replace(/'/g,"\\'")+'\')">Enregistrer les coordonnées</button>'+
       '<div id="edit-addr-msg"></div>'+
     '</div>';
     html += '<div class="info-grid">'+
