@@ -440,7 +440,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v36</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v37</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -1820,7 +1820,7 @@ const db = getFirestore(fbApp);
   function photoFieldHtml(slot, label){
     return '<label>'+esc(label)+'</label>'+
       '<div class="photo-field">'+
-      '<input type="file" accept="image/*" capture="environment" id="f-photo-'+slot+'" style="display:none;">'+
+      '<input type="file" accept="image/*" id="f-photo-'+slot+'" style="display:none;">'+
       '<button type="button" class="btn" id="f-photo-'+slot+'-btn">Ajouter une photo</button>'+
       '<span class="photo-status" id="f-photo-'+slot+'-status" hidden></span>'+
       '<div class="photo-preview" id="f-photo-'+slot+'-preview" hidden>'+
