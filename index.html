@@ -403,6 +403,7 @@
     width:100%; border:1px solid var(--border); background:var(--surface-2); border-radius:9px; padding:9px 10px; margin-top:4px;
     font:inherit; color:var(--ink);
   }
+  .postal-city-choices{margin-top:6px; border-color:var(--accent); color:var(--accent);}
   .form label{font-size:11.5px; font-weight:600; color:var(--ink-soft); display:block; margin-top:10px;}
   .form label:first-child{margin-top:0;}
   .form-row{display:flex; gap:10px;}
@@ -439,7 +440,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v35</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v36</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -739,20 +740,36 @@ const db = getFirestore(fbApp);
   // (5 chiffres) est saisi, via l'API officielle geo.api.gouv.fr (gratuite,
   // pas de clé nécessaire). N'écrase rien tant que le code postal n'a pas
   // 5 chiffres, et ne relance pas la recherche si le code n'a pas changé.
+  // Un même code postal pouvant correspondre à plusieurs communes, une
+  // petite liste déroulante apparaît pour choisir la bonne quand c'est le cas
+  // (la première proposition reste pré-remplie par défaut).
   function wirePostalAutoCity(postalId, cityId){
     var postalEl = document.getElementById(postalId);
     var cityEl = document.getElementById(cityId);
     if(!postalEl || !cityEl) return;
     var lastLookup = '';
+    var choiceEl = document.createElement('select');
+    choiceEl.className = 'postal-city-choices';
+    choiceEl.hidden = true;
+    cityEl.insertAdjacentElement('afterend', choiceEl);
+    choiceEl.addEventListener('change', function(){
+      if(choiceEl.value) cityEl.value = choiceEl.value;
+    });
     postalEl.addEventListener('input', function(){
       var cp = postalEl.value.trim();
+      choiceEl.hidden = true; choiceEl.innerHTML = '';
       if(!/^\d{5}$/.test(cp) || cp === lastLookup) return;
       lastLookup = cp;
-      fetch('https://geo.api.gouv.fr/communes?codePostal='+cp+'&fields=nom&format=json&limit=1')
+      fetch('https://geo.api.gouv.fr/communes?codePostal='+cp+'&fields=nom&format=json')
         .then(function(r){ return r.ok ? r.json() : []; })
         .then(function(list){
-          if(cp === postalEl.value.trim() && list && list.length && list[0].nom){
-            cityEl.value = list[0].nom;
+          if(cp !== postalEl.value.trim() || !list || !list.length) return;
+          cityEl.value = list[0].nom;
+          if(list.length > 1){
+            choiceEl.innerHTML = '<option value="" disabled>Plusieurs villes possibles, précisez…</option>'+
+              list.map(function(item){ return '<option value="'+esc(item.nom)+'">'+esc(item.nom)+'</option>'; }).join('');
+            choiceEl.value = list[0].nom;
+            choiceEl.hidden = false;
           }
         }).catch(function(){});
     });
