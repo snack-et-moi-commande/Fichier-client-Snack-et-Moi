@@ -421,7 +421,14 @@
     width:18px; height:18px; font-size:10px; line-height:1; cursor:pointer; flex:none;
     display:inline-flex; align-items:center; justify-content:center; padding:0;
   }
+  .visit-edit-btn{
+    background:var(--accent-soft); color:var(--accent); border:none; border-radius:50%;
+    width:18px; height:18px; font-size:10px; line-height:1; cursor:pointer; flex:none;
+    display:inline-flex; align-items:center; justify-content:center; padding:0;
+  }
   .visit-entry .vnotes{font-size:12.5px; margin-top:2px; white-space:pre-wrap; word-break:break-word;}
+  .visit-edit .form{margin-top:6px;}
+  .visit-edit .edit-actions .btn{flex:1;}
   .pending-tag{font-size:10px; color:var(--warn); font-weight:600;}
   .sync-banner{
     background:var(--warn-soft); color:var(--warn); font-size:11.5px; padding:7px 16px; text-align:center;
@@ -440,7 +447,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v37</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v38</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -1286,6 +1293,140 @@ const db = getFirestore(fbApp);
     });
   }
 
+  /* ---- Édition d'une visite existante (formulaire réutilisant les mêmes
+     briques que la saisie initiale, mais avec des id distincts pour ne pas
+     entrer en conflit avec le formulaire "Nouveau compte rendu" affiché sur
+     la même fiche) ---- */
+  var editingVisitKey = null; // v.id ou v.localId de la visite en cours de modification, ou null
+  var editPhotoState = {store:null, shelf:null}; // slot -> {blob} (nouvelle photo) | {dataUrl,existing:true} (conservée) | null (retirée)
+  function editPhotoFieldHtml(slot, label){
+    return '<label>'+esc(label)+'</label>'+
+      '<div class="photo-field">'+
+      '<input type="file" accept="image/*" id="ev-photo-'+slot+'" style="display:none;">'+
+      '<button type="button" class="btn" id="ev-photo-'+slot+'-btn">Ajouter une photo</button>'+
+      '<span class="photo-status" id="ev-photo-'+slot+'-status" hidden></span>'+
+      '<div class="photo-preview" id="ev-photo-'+slot+'-preview" hidden>'+
+        '<img src="" alt="'+esc(label)+'">'+
+        '<button type="button" class="photo-remove" aria-label="Retirer la photo">✕</button>'+
+      '</div>'+
+      '</div>';
+  }
+  function wireEditPhotoInputs(v){
+    editPhotoState = {
+      store: v.photoStore ? {dataUrl:v.photoStore.dataUrl, existing:true} : null,
+      shelf: v.photoShelf ? {dataUrl:v.photoShelf.dataUrl, existing:true} : null
+    };
+    ['store','shelf'].forEach(function(slot){
+      var input = document.getElementById('ev-photo-'+slot);
+      var addBtn = document.getElementById('ev-photo-'+slot+'-btn');
+      var preview = document.getElementById('ev-photo-'+slot+'-preview');
+      var img = preview ? preview.querySelector('img') : null;
+      var removeBtn = preview ? preview.querySelector('.photo-remove') : null;
+      var status = document.getElementById('ev-photo-'+slot+'-status');
+      if(!input) return;
+      if(editPhotoState[slot] && editPhotoState[slot].dataUrl){
+        img.src = editPhotoState[slot].dataUrl;
+        preview.hidden = false;
+        addBtn.hidden = true;
+      }
+      addBtn.addEventListener('click', function(){ input.click(); });
+      input.addEventListener('change', function(){
+        var file = input.files && input.files[0];
+        if(!file) return;
+        status.textContent = 'Compression…';
+        status.hidden = false;
+        compressImage(file, 900, 0.55).then(function(blob){
+          editPhotoState[slot] = { blob: blob };
+          var previewUrl = URL.createObjectURL(blob);
+          img.src = previewUrl;
+          preview.hidden = false;
+          addBtn.hidden = true;
+          status.hidden = true;
+          status.textContent = '';
+        }).catch(function(){
+          status.textContent = 'Photo illisible, réessaie.';
+        });
+      });
+      if(removeBtn){
+        removeBtn.addEventListener('click', function(){
+          editPhotoState[slot] = null;
+          input.value = '';
+          preview.hidden = true;
+          addBtn.hidden = false;
+        });
+      }
+    });
+  }
+  function uploadEditPhotos(){
+    var out = {};
+    Object.keys(editPhotoState).forEach(function(k){
+      if(editPhotoState[k] && editPhotoState[k].existing) out[k] = {dataUrl: editPhotoState[k].dataUrl};
+    });
+    var slots = Object.keys(editPhotoState).filter(function(k){ return editPhotoState[k] && editPhotoState[k].blob; });
+    if(!slots.length) return Promise.resolve(out);
+    return Promise.all(slots.map(function(slot){
+      return blobToDataURL(editPhotoState[slot].blob).then(function(dataUrl){
+        return {slot:slot, dataUrl:dataUrl};
+      }).catch(function(){ return null; });
+    })).then(function(results){
+      results.forEach(function(r){ if(r) out[r.slot] = {dataUrl:r.dataUrl}; });
+      return out;
+    });
+  }
+  window.startEditVisit = function(idOrLocalId){
+    editingVisitKey = idOrLocalId;
+    renderSheet(state.selectedRef);
+  };
+  window.cancelEditVisit = function(){
+    editingVisitKey = null;
+    renderSheet(state.selectedRef);
+  };
+  function submitEditVisit(v){
+    var commercial = document.getElementById('ev-commercial').value.trim();
+    var date = document.getElementById('ev-date').value || v.date || todayISO();
+    var notes = document.getElementById('ev-notes').value.trim();
+    var msgEl = document.getElementById('ev-msg');
+    if(!commercial){
+      msgEl.className = 'form-msg err';
+      msgEl.textContent = 'Indique le nom du commercial avant d\'enregistrer.';
+      msgEl.style.display='block';
+      return;
+    }
+    var saveBtn = document.getElementById('ev-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Enregistrement…';
+
+    uploadEditPhotos().then(function(photos){
+      var payload = { ref:v.ref, clientName:v.clientName, commercial:commercial, date:date, notes:notes, createdAt:v.createdAt };
+      if(photos.store) payload.photoStore = photos.store;
+      if(photos.shelf) payload.photoShelf = photos.shelf;
+
+      if(v.id){
+        return setDoc(doc(db, 'visites', v.id), payload).then(function(){
+          lastDbDocs = lastDbDocs.map(function(d){
+            return d.id === v.id ? Object.assign({id:v.id, synced:true}, payload) : d;
+          });
+          editingVisitKey = null;
+          refreshVisitsAndRender();
+        }).catch(function(){
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Enregistrer';
+          msgEl.className = 'form-msg err';
+          msgEl.textContent = 'Échec de l\'enregistrement — vérifie ta connexion et réessaie.';
+          msgEl.style.display='block';
+        });
+      } else {
+        pendingQueue = pendingQueue.map(function(p){
+          return p.localId === v.localId ? Object.assign({}, payload, {localId:v.localId}) : p;
+        });
+        savePendingQueue();
+        editingVisitKey = null;
+        refreshVisitsAndRender();
+        return Promise.resolve();
+      }
+    });
+  }
+
   window.deleteVisit = function(idOrLocalId, isLocal){
     if(!confirm('Supprimer ce compte rendu ? Cette action est définitive.')) return;
     if(isLocal){
@@ -1851,6 +1992,7 @@ const db = getFirestore(fbApp);
   }
   function openSheet(ref){
     state.selectedRef = ref;
+    editingVisitKey = null;
     renderSheet(ref);
     document.getElementById('scrim').classList.add('open');
     document.getElementById('sheet').classList.add('open');
@@ -2010,6 +2152,31 @@ const db = getFirestore(fbApp);
     if(visits.length){
       html += '<div class="visit-log">';
       visits.forEach(function(v){
+        var key = v.id || v.localId;
+        var keyArg = "'"+key+"'";
+        if(key === editingVisitKey){
+          html += '<div class="visit-entry visit-edit">'+
+            '<div class="form">'+
+            '<label for="ev-commercial">Merchandiser / Commercial</label>'+
+            '<select id="ev-commercial">'+
+              '<option value="">Choisir…</option>'+
+              COMMERCIALS.map(function(nm){ return '<option value="'+esc(nm)+'"'+(nm===(v.commercial||'')?' selected':'')+'>'+esc(nm)+'</option>'; }).join('')+
+            '</select>'+
+            '<label for="ev-date">Date de visite</label>'+
+            '<input type="date" id="ev-date" value="'+esc(v.date||todayISO())+'">'+
+            '<label for="ev-notes">Compte rendu</label>'+
+            '<textarea id="ev-notes">'+esc(v.notes||'')+'</textarea>'+
+            editPhotoFieldHtml('store','Photo du magasin')+
+            editPhotoFieldHtml('shelf','Photo du rayon')+
+            '<div class="edit-actions" style="display:flex; gap:8px; margin-top:14px;">'+
+              '<button class="btn primary" type="button" id="ev-save">Enregistrer</button>'+
+              '<button class="btn" type="button" onclick="cancelEditVisit()">Annuler</button>'+
+            '</div>'+
+            '<div id="ev-msg"></div>'+
+            '</div>'+
+          '</div>';
+          return;
+        }
         var photosHtml = '';
         if(v.photoStore || v.photoShelf){
           photosHtml = '<div class="visit-photos">'+
@@ -2020,7 +2187,8 @@ const db = getFirestore(fbApp);
         var delArg = v.id ? ("'"+v.id+"', false") : ("'"+v.localId+"', true");
         html += '<div class="visit-entry">'+
           '<div class="vtop"><span>'+esc(v.commercial||'Non renseigné')+(v.synced===false?' <span class="pending-tag">· en attente</span>':'')+'</span>'+
-          '<span class="d">'+fmtDate(v.date)+'<button type="button" class="visit-del" title="Supprimer ce compte rendu" onclick="deleteVisit('+delArg+')">✕</button></span></div>'+
+          '<span class="d">'+fmtDate(v.date)+'<button type="button" class="visit-edit-btn" title="Modifier ce compte rendu" onclick="startEditVisit('+keyArg+')">✎</button>'+
+          '<button type="button" class="visit-del" title="Supprimer ce compte rendu" onclick="deleteVisit('+delArg+')">✕</button></span></div>'+
           (v.notes ? '<div class="vnotes">'+esc(v.notes)+'</div>' : '')+
           photosHtml+
         '</div>';
@@ -2049,6 +2217,15 @@ const db = getFirestore(fbApp);
       });
     });
     wirePhotoInputs(ref);
+    if(editingVisitKey){
+      var editingVisit = visits.filter(function(v){ return (v.id||v.localId) === editingVisitKey; })[0];
+      if(editingVisit){
+        wireEditPhotoInputs(editingVisit);
+        document.getElementById('ev-save').addEventListener('click', function(){ submitEditVisit(editingVisit); });
+      } else {
+        editingVisitKey = null; // visite introuvable (supprimée ailleurs) : on abandonne l'édition
+      }
+    }
   }
 
   function submitVisit(ref){
