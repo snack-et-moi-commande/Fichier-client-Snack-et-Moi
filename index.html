@@ -447,7 +447,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v39</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v40</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -845,6 +845,11 @@ const db = getFirestore(fbApp);
     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params).then(function(){
       if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le catalogue par e-mail'; }
       if(msgEl){ msgEl.className = 'form-msg ok'; msgEl.style.display='block'; msgEl.textContent = 'E-mail envoyé à '+c.e+'.'; }
+      // Trace l'envoi dans l'historique du client/prospect, comme une visite,
+      // pour garder une preuve de l'action dans les comptes rendus.
+      saveVisit(ref, c.n, state.commercial || 'Non renseigné', todayISO(), 'Catalogue envoyé par e-mail à '+c.e+'.').then(function(){
+        refreshVisitsAndRender();
+      });
     }).catch(function(err){
       if(btn){ btn.disabled = false; btn.textContent = 'Envoyer le catalogue par e-mail'; }
       var detail = (err && (err.text || err.message)) ? (' — ' + (err.status ? '('+err.status+') ' : '') + (err.text || err.message)) : '';
