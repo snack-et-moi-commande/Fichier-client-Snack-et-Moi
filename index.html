@@ -447,7 +447,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v38</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v39</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -679,13 +679,35 @@ const db = getFirestore(fbApp);
     } catch(e){}
   }
 
-  function geocodeAddress(address, postal, city){
+  // Géocodage : on interroge d'abord la Base Adresse Nationale (service du
+  // gouvernement français, sans limite de débit stricte et très fiable sur
+  // les adresses françaises), puis on retombe sur Nominatim/OpenStreetMap
+  // en secours (utile notamment pour les adresses hors de France, ex.
+  // Espagne). Avant ce correctif, seul Nominatim était utilisé et échouait
+  // silencieusement assez souvent, ce qui faisait retomber les nouveaux
+  // prospects sur des coordonnées par défaut (tous regroupés au même point).
+  function geocodeAddressBAN(address, postal, city){
+    var q = [address, postal, city].filter(Boolean).join(', ');
+    var url = 'https://api-adresse.data.gouv.fr/search/?limit=1&q=' + encodeURIComponent(q);
+    return fetch(url).then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
+      var f = data && data.features && data.features[0];
+      if(f && f.geometry && f.geometry.coordinates) return {lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0]};
+      return null;
+    }).catch(function(){ return null; });
+  }
+  function geocodeAddressNominatim(address, postal, city){
     var q = [address, postal, city, 'France'].filter(Boolean).join(', ');
     var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q);
     return fetch(url, {headers:{'Accept':'application/json'}}).then(function(r){ return r.json(); }).then(function(results){
       if(results && results[0]) return {lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon)};
       return null;
     }).catch(function(){ return null; });
+  }
+  function geocodeAddress(address, postal, city){
+    return geocodeAddressBAN(address, postal, city).then(function(coords){
+      if(coords) return coords;
+      return geocodeAddressNominatim(address, postal, city);
+    });
   }
 
   window.saveClientAddress = function(ref){
@@ -896,7 +918,9 @@ const db = getFirestore(fbApp);
     renderMeChip();
     btn.disabled = true; btn.textContent = 'Localisation en cours…';
     msgEl.style.display='none';
+    var geocodeFailed = false;
     geocodeAddress(addr, postal, city).then(function(coords){
+      geocodeFailed = !coords;
       var prospectData = {
         n:name, a:addr, p:postal, c:city, k:contact, t:phone, e:email,
         lat: coords ? coords.lat : 43.4, lng: coords ? coords.lng : -1.5,
@@ -917,6 +941,9 @@ const db = getFirestore(fbApp);
         });
       });
     }).then(function(ref){
+      if(geocodeFailed){
+        alert('Prospect enregistré, mais son adresse n\'a pas pu être localisée automatiquement — il apparaîtra provisoirement au même endroit que les autres prospects non localisés. Ouvre sa fiche et utilise « Modifier les coordonnées » pour réessayer.');
+      }
       openSheet(ref);
     }).catch(function(){
       btn.disabled = false; btn.textContent = 'Enregistrer le prospect';
