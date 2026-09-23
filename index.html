@@ -447,7 +447,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v40</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v41</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -1654,7 +1654,27 @@ const db = getFirestore(fbApp);
           // dot silently do nothing). Hit-test the real cursor position instead.
           var hit = document.elementFromPoint(e.clientX, e.clientY);
           var dotEl = hit && hit.closest ? hit.closest('.map-dot') : null;
-          if(dotEl) handleDotTap(dotEl.getAttribute('data-ref'));
+          if(dotEl){
+            handleDotTap(dotEl.getAttribute('data-ref'));
+          } else {
+            // Filet de rattrapage : sur un groupe de points très rapprochés
+            // ("nuage" de points superposés), un doigt (surtout sur Android,
+            // où le point de contact touché est parfois décalé de quelques
+            // pixels par rapport au centre exact du cercle) peut atterrir
+            // juste à côté d'un cercle réel plutôt que dessus — elementFromPoint
+            // ne trouve alors aucun .map-dot et rien ne se passait. On
+            // cherche ici le point le plus proche du tap dans une tolérance
+            // un peu plus large que le rayon visuel des cercles.
+            var tapPt = svgPoint(svg, e.clientX, e.clientY);
+            var fbBounds = currentBounds();
+            var best = null, bestDist = Infinity;
+            filteredClients().forEach(function(c){
+              var sp = screenPosOf(c, fbBounds);
+              var d = Math.hypot(sp.x - tapPt.x, sp.y - tapPt.y);
+              if(d < bestDist){ bestDist = d; best = c; }
+            });
+            if(best && bestDist <= TAP_FALLBACK_RADIUS_SVG) handleDotTap(best.r);
+          }
         }
         mode = null;
       } else if(n === 1){
@@ -1970,6 +1990,7 @@ const db = getFirestore(fbApp);
   // zoomed in enough yet to fully separate them), tapping one opens a small
   // picker listing all the nearby ones instead of guessing which was meant.
   var PICK_RADIUS_SVG = 9;
+  var TAP_FALLBACK_RADIUS_SVG = 16; // tolérance pour un tap qui atterrit juste à côté d'un point
   function screenPosOf(c, bounds){
     var p = project(c.lat, c.lng, bounds);
     return { x: mapView.scale*p.x + mapView.tx, y: mapView.scale*p.y + mapView.ty, world:p };
