@@ -448,7 +448,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v44</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v45</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -1687,6 +1687,16 @@ const db = getFirestore(fbApp);
           // e.target here is `wrap` itself, not the dot under the cursor, so
           // we can't rely on it (this is what made desktop clicks on a map
           // dot silently do nothing). Hit-test the real cursor position instead.
+          //
+          // We also open the sheet synchronously right here, inside this
+          // handler. Afterwards the browser still fires its own follow-up
+          // "click" event for the tap, re-hit-tested at dispatch time — which
+          // now lands on the scrim we just opened (its own click-to-close
+          // listener), closing the sheet an instant after it appeared. This
+          // was invisible on iPhone (Safari targets that click differently)
+          // but reproduced every time on Android. Suppressing the browser's
+          // click here stops it from being generated at all.
+          e.preventDefault();
           var hit = document.elementFromPoint(e.clientX, e.clientY);
           var dotEl = hit && hit.closest ? hit.closest('.map-dot') : null;
           if(dotEl){
@@ -2094,12 +2104,14 @@ const db = getFirestore(fbApp);
     sheetEl.style.left = '0';
     sheetEl.style.right = 'auto';
   }
+  var lastSheetOpenAt = 0; // filet de sécurité, voir le listener de #scrim plus bas
   function openSheet(ref){
     state.selectedRef = ref;
     editingVisitKey = null;
     renderSheet(ref);
     document.getElementById('scrim').classList.add('open');
     document.getElementById('sheet').classList.add('open');
+    lastSheetOpenAt = Date.now();
     lockSheetWidth();
     if(state.view === 'map') renderMap();
   }
@@ -2129,6 +2141,7 @@ const db = getFirestore(fbApp);
     state.selectedRef = null;
     document.getElementById('scrim').classList.add('open');
     document.getElementById('sheet').classList.add('open');
+    lastSheetOpenAt = Date.now();
   }
   /* ============================= SEARCH DROPDOWN ============================= */
   function hideSearchDropdown(){
@@ -2427,7 +2440,14 @@ const db = getFirestore(fbApp);
     var dd = document.getElementById('search-dropdown');
     if(!dd.hidden) positionSearchDropdown();
   });
-  document.getElementById('scrim').addEventListener('click', closeSheet);
+  document.getElementById('scrim').addEventListener('click', function(){
+    // Filet de sécurité complémentaire au e.preventDefault() du tap : si un
+    // navigateur générait quand même un clic de compatibilité juste après
+    // l'ouverture de la fiche, on l'ignore plutôt que de refermer aussitôt
+    // ce qu'on vient d'ouvrir.
+    if(Date.now() - lastSheetOpenAt < 400) return;
+    closeSheet();
+  });
   document.getElementById('btn-extent-region').addEventListener('click', function(){
     state.extent='region';
     this.classList.add('active');
