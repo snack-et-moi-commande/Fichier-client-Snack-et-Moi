@@ -448,7 +448,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v43</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v44</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -1591,12 +1591,21 @@ const db = getFirestore(fbApp);
   // à chaque tap sur la carte (utile pour déboguer un souci propre à un
   // téléphone qu'on ne peut pas tester nous-même).
   var DEBUG_TAPS = /(^|[?&])debug=1(&|$)/.test(location.search);
-  function tapDebugLog(text){
+  function tapDebugLog(text, append){
     if(!DEBUG_TAPS) return;
     var el = document.getElementById('tap-debug');
     if(!el) return;
     el.style.display = 'block';
-    el.textContent = text;
+    el.textContent = append ? (el.textContent + '\n' + text) : text;
+  }
+  if(DEBUG_TAPS){
+    // Si le tap est bien détecté mais que rien ne s'affiche ensuite (fiche,
+    // liste…), c'est probablement une erreur JS qui interrompt silencieusement
+    // l'exécution à ce moment-là — on l'affiche ici au lieu de la laisser
+    // invisible (pas d'accès à la console sur le téléphone).
+    window.addEventListener('error', function(ev){
+      tapDebugLog('ERREUR JS: '+ev.message+'\n'+(ev.filename?ev.filename.split('/').pop():'')+':'+ev.lineno+':'+ev.colno+(ev.error && ev.error.stack ? '\n'+ev.error.stack : ''), true);
+    });
   }
 
   function initMapGestures(){
@@ -2032,18 +2041,24 @@ const db = getFirestore(fbApp);
     return { x: mapView.scale*p.x + mapView.tx, y: mapView.scale*p.y + mapView.ty, world:p };
   }
   function handleDotTap(ref){
-    var target = byRef[ref];
-    if(!target) return;
-    var bounds = currentBounds();
-    var tp = screenPosOf(target, bounds);
-    var nearby = filteredClients().filter(function(c){
-      var sp = screenPosOf(c, bounds);
-      return Math.hypot(sp.x-tp.x, sp.y-tp.y) <= PICK_RADIUS_SVG;
-    });
-    if(nearby.length > 1){
-      openPicker(nearby, ref);
-    } else {
-      openSheet(ref);
+    try{
+      var target = byRef[ref];
+      if(!target){ tapDebugLog('handleDotTap: ref="'+ref+'" introuvable dans byRef.', true); return; }
+      var bounds = currentBounds();
+      var tp = screenPosOf(target, bounds);
+      var nearby = filteredClients().filter(function(c){
+        var sp = screenPosOf(c, bounds);
+        return Math.hypot(sp.x-tp.x, sp.y-tp.y) <= PICK_RADIUS_SVG;
+      });
+      tapDebugLog('handleDotTap("'+ref+'") : '+nearby.length+' point(s) à proximité -> '+(nearby.length>1?'openPicker()':'openSheet()'), true);
+      if(nearby.length > 1){
+        openPicker(nearby, ref);
+      } else {
+        openSheet(ref);
+      }
+      tapDebugLog('… terminé sans erreur.', true);
+    }catch(err){
+      tapDebugLog('ERREUR dans handleDotTap: '+(err && err.message ? err.message : err)+(err && err.stack ? '\n'+err.stack : ''), true);
     }
   }
 
