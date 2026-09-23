@@ -437,6 +437,7 @@
 </head>
 <body>
 
+<div id="tap-debug" style="display:none; position:fixed; left:8px; right:8px; bottom:8px; z-index:9999; background:rgba(10,14,10,.92); color:#fff; font:11px/1.5 monospace; padding:10px; border-radius:10px; white-space:pre-wrap; max-height:40vh; overflow:auto;"></div>
 <div id="lightbox" class="lightbox" onclick="closeLightbox()">
   <button type="button" class="lb-close" onclick="closeLightbox(event)">&times;</button>
   <img id="lightbox-img" src="" alt="">
@@ -447,7 +448,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v42</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v43</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -1585,6 +1586,19 @@ const db = getFirestore(fbApp);
   }
   function resetView(){ mapView.scale=1; mapView.tx=0; mapView.ty=0; applyTransform(); }
 
+  // Diagnostic temporaire : ouvrir l'appli avec ?debug=1 à la fin de l'adresse
+  // affiche un petit panneau en bas de l'écran qui détaille ce qui se passe
+  // à chaque tap sur la carte (utile pour déboguer un souci propre à un
+  // téléphone qu'on ne peut pas tester nous-même).
+  var DEBUG_TAPS = /(^|[?&])debug=1(&|$)/.test(location.search);
+  function tapDebugLog(text){
+    if(!DEBUG_TAPS) return;
+    var el = document.getElementById('tap-debug');
+    if(!el) return;
+    el.style.display = 'block';
+    el.textContent = text;
+  }
+
   function initMapGestures(){
     var wrap = document.getElementById('map-wrap');
     var svg = document.getElementById('map-svg');
@@ -1602,6 +1616,7 @@ const db = getFirestore(fbApp);
 
     wrap.addEventListener('pointerdown', function(e){
       if(e.target.closest('.map-toolbar, .zoom-controls, .map-note')) return;
+      tapDebugLog('pointerdown reçu (pointerType='+e.pointerType+') — en attente du relâchement…');
       pointers[e.pointerId] = {x:e.clientX, y:e.clientY};
       try{ wrap.setPointerCapture(e.pointerId); }catch(err){}
       var n = ids().length;
@@ -1656,6 +1671,7 @@ const db = getFirestore(fbApp);
       if(n === 0){
         if(totalMove > 10){
           suppressClick = true; setTimeout(function(){ suppressClick = false; }, 0);
+          tapDebugLog('type='+e.type+' pointerType='+e.pointerType+'\nInterprété comme un GLISSEMENT (totalMove='+totalMove.toFixed(1)+' > 10)\npas de tap traité.');
         } else if(e.type === 'pointerup'){
           // Tap (not a drag). `wrap` holds pointer capture (set on pointerdown
           // below), which browsers use to retarget this pointer's events —
@@ -1665,6 +1681,7 @@ const db = getFirestore(fbApp);
           var hit = document.elementFromPoint(e.clientX, e.clientY);
           var dotEl = hit && hit.closest ? hit.closest('.map-dot') : null;
           if(dotEl){
+            tapDebugLog('type='+e.type+' pointerType='+e.pointerType+'\ntotalMove='+totalMove.toFixed(1)+'\nelementFromPoint -> '+(hit?(hit.tagName+'.'+(hit.className&&hit.className.baseVal!=null?hit.className.baseVal:hit.className)):'null')+'\n.map-dot trouvé directement, ref='+dotEl.getAttribute('data-ref')+'\n-> handleDotTap() appelé.');
             handleDotTap(dotEl.getAttribute('data-ref'));
           } else {
             // Filet de rattrapage : sur un groupe de points très rapprochés
@@ -1683,8 +1700,12 @@ const db = getFirestore(fbApp);
               var d = Math.hypot(sp.x - tapPt.x, sp.y - tapPt.y);
               if(d < bestDist){ bestDist = d; best = c; }
             });
-            if(best && bestDist <= TAP_FALLBACK_RADIUS_SVG) handleDotTap(best.r);
+            var found = best && bestDist <= TAP_FALLBACK_RADIUS_SVG;
+            tapDebugLog('type='+e.type+' pointerType='+e.pointerType+'\ntotalMove='+totalMove.toFixed(1)+'\nelementFromPoint -> '+(hit?(hit.tagName+'.'+(hit.className&&hit.className.baseVal!=null?hit.className.baseVal:hit.className)):'null')+' (pas de .map-dot)\nPoint le plus proche : '+(best?best.n:'aucun')+' à '+(best?bestDist.toFixed(1):'-')+' (tolérance='+TAP_FALLBACK_RADIUS_SVG+')\n-> '+(found?'handleDotTap() appelé via le filet de rattrapage.':'RIEN appelé (hors tolérance).'));
+            if(found) handleDotTap(best.r);
           }
+        } else {
+          tapDebugLog('type='+e.type+' pointerType='+e.pointerType+'\ntotalMove='+totalMove.toFixed(1)+' (≤10, mais e.type≠pointerup donc rien traité)');
         }
         mode = null;
       } else if(n === 1){
