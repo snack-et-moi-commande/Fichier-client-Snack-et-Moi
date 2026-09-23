@@ -447,7 +447,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v41</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v42</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -1593,6 +1593,7 @@ const db = getFirestore(fbApp);
     var lastV = null;
     var prevDist = 0, prevMid = null;
     var totalMove = 0;
+    var downPos = null; // {x,y} client coords at the start of a single-pointer touch
     var suppressClick = false;
 
     function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
@@ -1608,11 +1609,13 @@ const db = getFirestore(fbApp);
         mode = 'pan';
         lastV = svgPoint(svg, e.clientX, e.clientY);
         totalMove = 0;
+        downPos = {x:e.clientX, y:e.clientY};
       } else if(n === 2){
         mode = 'pinch';
         var a = pointers[ids()[0]], b = pointers[ids()[1]];
         prevDist = dist(a,b);
         prevMid = mid(a,b);
+        downPos = null; // deux doigts : ce ne sera jamais un tap
       }
     });
 
@@ -1623,10 +1626,17 @@ const db = getFirestore(fbApp);
       if(mode === 'pan' && n === 1){
         var v = svgPoint(svg, e.clientX, e.clientY);
         var dx = v.x - lastV.x, dy = v.y - lastV.y;
-        totalMove += Math.hypot(e.movementX||0, e.movementY||0);
         mapView.tx += dx; mapView.ty += dy;
         lastV = v;
         applyTransform();
+        // Écart net par rapport au point de départ du doigt (pas la somme des
+        // micro-déplacements intermédiaires : sur Android, un doigt posé sur
+        // l'écran génère beaucoup plus d'évènements pointermove — avec de
+        // légers tremblements — qu'sur iOS pendant un simple tap immobile ;
+        // additionner chaque micro-mouvement dépassait vite le seuil et
+        // faisait passer un tap normal pour un glissement, ce qui empêchait
+        // le point ou le groupe de points touché de s'ouvrir.
+        if(downPos) totalMove = Math.hypot(e.clientX-downPos.x, e.clientY-downPos.y);
       } else if(mode === 'pinch' && n === 2){
         var a = pointers[ids()[0]], b = pointers[ids()[1]];
         var d = dist(a,b);
@@ -1636,7 +1646,7 @@ const db = getFirestore(fbApp);
           zoomAt(m.x, m.y, factor);
         }
         prevDist = d; prevMid = m;
-        totalMove += 10; // pinch always counts as a gesture, never a tap
+        totalMove = 999; // pinch : jamais interprété comme un tap
       }
     });
 
@@ -1644,7 +1654,7 @@ const db = getFirestore(fbApp);
       delete pointers[e.pointerId];
       var n = ids().length;
       if(n === 0){
-        if(totalMove > 6){
+        if(totalMove > 10){
           suppressClick = true; setTimeout(function(){ suppressClick = false; }, 0);
         } else if(e.type === 'pointerup'){
           // Tap (not a drag). `wrap` holds pointer capture (set on pointerdown
@@ -1678,10 +1688,15 @@ const db = getFirestore(fbApp);
         }
         mode = null;
       } else if(n === 1){
-        // transition from pinch back to pan with the remaining finger
+        // transition from pinch back to pan with the remaining finger — this
+        // was already a multi-touch gesture, so it must never be treated as
+        // a tap once the second finger lifts; keep downPos unset so the pan
+        // handler above doesn't recompute totalMove from a stale start point
         mode = 'pan';
         var k = ids()[0];
         lastV = svgPoint(svg, pointers[k].x, pointers[k].y);
+        downPos = null;
+        totalMove = 999;
       }
     }
     wrap.addEventListener('pointerup', endPointer);
