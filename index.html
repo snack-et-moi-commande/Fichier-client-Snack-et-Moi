@@ -483,7 +483,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v48</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v49</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -2594,15 +2594,17 @@ const db = getFirestore(fbApp);
     });
   }
 
-  var tourBuilder = null; // {refs:[...], commercial, label, date} pendant la construction d'une tournée
-  window.openNewTourSheet = function(){
+  var tourBuilder = null; // {id, refs:[...], commercial, label, date} pendant la construction/modification d'une tournée
+  function openTourSheet(existing){
     state.selectedRef = null;
-    tourBuilder = { refs: [], commercial: state.commercial || '', label: '', date: todayISO() };
+    tourBuilder = existing
+      ? { id: existing.id, refs: existing.refs.slice(), commercial: existing.commercial || '', label: existing.label || '', date: existing.date || todayISO() }
+      : { id: null, refs: [], commercial: state.commercial || '', label: '', date: todayISO() };
     var html = '<div class="sheet-head">'+
-      '<span class="sheet-title">Nouvelle tournée</span>'+
+      '<span class="sheet-title">'+(existing?'Modifier la tournée':'Nouvelle tournée')+'</span>'+
       '<button class="sheet-close" id="sheet-close" type="button" aria-label="Fermer">✕</button>'+
     '</div>'+
-    '<div class="empty-hint" style="padding-top:2px;">Choisissez les clients/prospects à visiter, dans l\'ordre voulu, puis assignez la tournée à un commercial.</div>'+
+    '<div class="empty-hint" style="padding-top:2px;">Choisissez les clients/prospects à visiter, dans l\'ordre voulu, puis assignez la tournée à un commercial. Vous pouvez enregistrer à tout moment et reprendre plus tard avec "Modifier".</div>'+
     '<div class="form" style="margin-top:10px;">'+
       '<label for="tb-commercial">Commercial</label>'+
       '<select id="tb-commercial">'+
@@ -2610,8 +2612,8 @@ const db = getFirestore(fbApp);
         COMMERCIALS.map(function(nm){ return '<option value="'+esc(nm)+'"'+(nm===tourBuilder.commercial?' selected':'')+'>'+esc(nm)+'</option>'; }).join('')+
       '</select>'+
       '<div class="form-row">'+
-        '<div><label for="tb-label">Nom (optionnel)</label><input type="text" id="tb-label" placeholder="ex. Secteur côte"></div>'+
-        '<div><label for="tb-date">Date (optionnel)</label><input type="date" id="tb-date" value="'+todayISO()+'"></div>'+
+        '<div><label for="tb-label">Nom (optionnel)</label><input type="text" id="tb-label" placeholder="ex. Secteur côte" value="'+esc(tourBuilder.label)+'"></div>'+
+        '<div><label for="tb-date">Date (optionnel)</label><input type="date" id="tb-date" value="'+esc(tourBuilder.date)+'"></div>'+
       '</div>'+
       '<label for="tb-search">Ajouter un point (client ou prospect)</label>'+
       '<input type="text" id="tb-search" placeholder="Nom, ville…" autocomplete="off">'+
@@ -2619,7 +2621,7 @@ const db = getFirestore(fbApp);
       '<label style="margin-top:16px;">Arrêts de la tournée (<span id="tb-count">0</span>)</label>'+
       '<button type="button" class="btn" id="tb-optimize" style="margin-top:6px;">Optimiser l\'ordre automatiquement</button>'+
       '<div id="tb-list"></div>'+
-      '<button type="button" class="btn primary block" id="tb-save" style="margin-top:14px;">Enregistrer la tournée</button>'+
+      '<button type="button" class="btn primary block" id="tb-save" style="margin-top:14px;">'+(existing?'Enregistrer les modifications':'Enregistrer la tournée')+'</button>'+
       '<div id="tb-msg"></div>'+
     '</div>';
     document.getElementById('sheet-scroll').innerHTML = html;
@@ -2633,6 +2635,14 @@ const db = getFirestore(fbApp);
     document.getElementById('tb-save').addEventListener('click', saveTour);
     wireTourBuilderSearch();
     renderTourBuilderList();
+  }
+  window.openNewTourSheet = function(){
+    openTourSheet(null);
+  };
+  window.editTour = function(id){
+    var t = TOURS.filter(function(x){ return x.id === id; })[0];
+    if(!t) return;
+    openTourSheet(t);
   };
 
   function searchClientsForTour(q){
@@ -2720,14 +2730,18 @@ const db = getFirestore(fbApp);
       return;
     }
     btn.disabled = true; btn.textContent = 'Enregistrement…';
-    var payload = { commercial: commercial, refs: tourBuilder.refs, createdAt: Date.now() };
+    var existing = tourBuilder.id ? TOURS.filter(function(x){ return x.id === tourBuilder.id; })[0] : null;
+    var payload = { commercial: commercial, refs: tourBuilder.refs, createdAt: existing ? existing.createdAt : Date.now() };
     if(label) payload.label = label;
     if(date) payload.date = date;
-    addDoc(collection(db, 'tournees'), payload).then(function(){
+    var savePromise = tourBuilder.id
+      ? setDoc(doc(db, 'tournees', tourBuilder.id), payload)
+      : addDoc(collection(db, 'tournees'), payload);
+    savePromise.then(function(){
       closeSheet();
       switchView('tours');
     }).catch(function(){
-      btn.disabled = false; btn.textContent = 'Enregistrer la tournée';
+      btn.disabled = false; btn.textContent = tourBuilder.id ? 'Enregistrer les modifications' : 'Enregistrer la tournée';
       msgEl.className = 'form-msg err'; msgEl.style.display='block';
       msgEl.textContent = 'Échec de l\'enregistrement — vérifie ta connexion et réessaie.';
     });
