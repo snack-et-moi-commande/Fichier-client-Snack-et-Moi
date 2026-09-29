@@ -483,7 +483,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v49</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v50</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -651,6 +651,7 @@ const db = getFirestore(fbApp);
       var ov = clientOverrides[base.r];
       if(ov && ov.deleted) return; // client supprimé, on l'exclut
       var c = ov ? Object.assign({}, base, {
+        n: (ov.n != null ? ov.n : base.n),
         a: (ov.a != null ? ov.a : base.a),
         p: (ov.p != null ? ov.p : base.p),
         c: (ov.c != null ? ov.c : base.c),
@@ -667,7 +668,7 @@ const db = getFirestore(fbApp);
       if(ov && ov.deleted) return; // prospect supprimé, on l'exclut
       var p = prospects[ref];
       var c = {
-        r: ref, n: p.n, a: (ov && ov.a != null ? ov.a : p.a), p: (ov && ov.p != null ? ov.p : p.p),
+        r: ref, n: (ov && ov.n != null ? ov.n : p.n), a: (ov && ov.a != null ? ov.a : p.a), p: (ov && ov.p != null ? ov.p : p.p),
         c: (ov && ov.c != null ? ov.c : p.c),
         t: (ov && ov.t != null ? ov.t : (p.t||'')),
         k: (ov && ov.k != null ? ov.k : (p.k||'')),
@@ -774,6 +775,7 @@ const db = getFirestore(fbApp);
   }
 
   window.saveClientAddress = function(ref){
+    var nameEl = document.getElementById('edit-name');
     var addrEl = document.getElementById('edit-addr');
     var postalEl = document.getElementById('edit-postal');
     var cityEl = document.getElementById('edit-city');
@@ -782,30 +784,31 @@ const db = getFirestore(fbApp);
     var emailEl = document.getElementById('edit-email');
     var msgEl = document.getElementById('edit-addr-msg');
     var btn = document.getElementById('edit-addr-save');
+    var name = nameEl.value.trim();
     var address = addrEl.value.trim(), postal = postalEl.value.trim(), city = cityEl.value.trim();
     var contact = contactEl.value.trim(), phone = phoneEl.value.trim(), email = emailEl.value.trim();
-    if(!address || !city){
-      msgEl.textContent = 'Adresse et ville sont obligatoires.';
+    if(!name || !address || !city){
+      msgEl.textContent = 'Nom, adresse et ville sont obligatoires.';
       msgEl.className = 'form-msg err'; msgEl.style.display='block';
       return;
     }
     btn.disabled = true; btn.textContent = 'Localisation en cours…';
     geocodeAddress(address, postal, city).then(function(coords){
-      var payload = { a: address, p: postal, c: city, k: contact, t: phone, e: email, updatedAt: Date.now() };
+      var payload = { n: name, a: address, p: postal, c: city, k: contact, t: phone, e: email, updatedAt: Date.now() };
       if(coords){ payload.lat = coords.lat; payload.lng = coords.lng; }
       return setDoc(doc(db, 'client_overrides', ref), payload, {merge:true}).then(function(){ return coords; });
     }).then(function(coords){
-      btn.disabled = false; btn.textContent = 'Enregistrer les coordonnées';
+      btn.disabled = false; btn.textContent = 'Enregistrer la fiche';
       msgEl.style.display='block';
       if(coords){
         msgEl.className = 'form-msg ok';
-        msgEl.textContent = 'Coordonnées et position mises à jour.';
+        msgEl.textContent = 'Fiche et position mises à jour.';
       } else {
         msgEl.className = 'form-msg local';
-        msgEl.textContent = 'Coordonnées enregistrées, mais le point sur la carte n\'a pas pu être repositionné automatiquement.';
+        msgEl.textContent = 'Fiche enregistrée, mais le point sur la carte n\'a pas pu être repositionné automatiquement.';
       }
     }).catch(function(){
-      btn.disabled = false; btn.textContent = 'Enregistrer les coordonnées';
+      btn.disabled = false; btn.textContent = 'Enregistrer la fiche';
       msgEl.style.display='block';
       msgEl.className = 'form-msg err';
       msgEl.textContent = 'Échec de l\'enregistrement — vérifie ta connexion et réessaie.';
@@ -2340,7 +2343,7 @@ const db = getFirestore(fbApp);
     html += '<div class="sheet-addr">'+esc(c.a)+'<br>'+esc(c.p)+' '+esc(c.c)+'</div>';
     html += '<div class="sheet-actions">'+
       '<a class="btn accent" href="'+mapsUrl+'" target="_blank" rel="noopener">Itinéraire</a>'+
-      '<button type="button" class="btn" onclick="toggleAddressEdit()">Modifier les coordonnées</button>'+
+      '<button type="button" class="btn" onclick="toggleAddressEdit()">Modifier la fiche</button>'+
       '<button type="button" class="btn danger" onclick="deleteClient(\''+ref.replace(/'/g,"\\'")+'\')">Supprimer ce client</button>'+
     '</div>';
     if(c.e){
@@ -2349,7 +2352,21 @@ const db = getFirestore(fbApp);
       '</div>'+
       '<div id="send-catalog-msg" class="form-msg" style="display:none;"></div>';
     }
+    html += '<div class="form" style="margin-top:10px;">'+
+      '<label for="add-to-tour-select">Ajouter à une tournée existante</label>'+
+      '<div class="form-row" style="align-items:flex-end;">'+
+        '<div style="flex:2;"><select id="add-to-tour-select"'+(!TOURS.length?' disabled':'')+'>'+
+          (TOURS.length ? TOURS.map(function(t){
+            return '<option value="'+t.id+'">'+esc(t.label || ('Tournée · '+t.commercial))+(t.date?' · '+fmtDate(t.date):'')+'</option>';
+          }).join('') : '<option value="">Aucune tournée créée</option>')+
+        '</select></div>'+
+        '<div><button type="button" class="btn" id="add-to-tour-btn"'+(!TOURS.length?' disabled':'')+' onclick="addClientToTour(\''+ref.replace(/'/g,"\\'")+'\')">Ajouter</button></div>'+
+      '</div>'+
+      '<div id="add-to-tour-msg"></div>'+
+    '</div>';
     html += '<div class="form" id="edit-addr-box" hidden style="margin-top:10px;">'+
+      '<label for="edit-name">Nom</label>'+
+      '<input type="text" id="edit-name" value="'+esc(c.n)+'" placeholder="Nom de l\'enseigne">'+
       '<label for="edit-addr">Adresse (numéro et rue)</label>'+
       '<input type="text" id="edit-addr" value="'+esc(c.a)+'" placeholder="Adresse du magasin, pas du siège">'+
       '<div class="form-row">'+
@@ -2362,7 +2379,7 @@ const db = getFirestore(fbApp);
         '<div><label for="edit-phone">Téléphone</label><input type="text" id="edit-phone" value="'+esc(c.t||'')+'"></div>'+
         '<div><label for="edit-email">Email</label><input type="email" id="edit-email" value="'+esc(c.e||'')+'"></div>'+
       '</div>'+
-      '<button type="button" class="btn primary block" id="edit-addr-save" style="margin-top:10px;" onclick="saveClientAddress(\''+ref.replace(/'/g,"\\'")+'\')">Enregistrer les coordonnées</button>'+
+      '<button type="button" class="btn primary block" id="edit-addr-save" style="margin-top:10px;" onclick="saveClientAddress(\''+ref.replace(/'/g,"\\'")+'\')">Enregistrer la fiche</button>'+
       '<div id="edit-addr-msg"></div>'+
     '</div>';
     html += '<div class="info-grid">'+
@@ -2713,6 +2730,37 @@ const db = getFirestore(fbApp);
       });
     });
   }
+  window.addClientToTour = function(ref){
+    var sel = document.getElementById('add-to-tour-select');
+    var msgEl = document.getElementById('add-to-tour-msg');
+    var btn = document.getElementById('add-to-tour-btn');
+    var tourId = sel && sel.value;
+    if(!tourId){
+      msgEl.className = 'form-msg err'; msgEl.style.display='block';
+      msgEl.textContent = 'Choisis une tournée.';
+      return;
+    }
+    var tour = TOURS.filter(function(t){ return t.id === tourId; })[0];
+    if(!tour) return;
+    if(tour.refs.indexOf(ref) !== -1){
+      msgEl.className = 'form-msg local'; msgEl.style.display='block';
+      msgEl.textContent = 'Déjà présent dans cette tournée.';
+      return;
+    }
+    btn.disabled = true; btn.textContent = 'Ajout…';
+    var payload = { commercial: tour.commercial, refs: tour.refs.concat([ref]), createdAt: tour.createdAt };
+    if(tour.label) payload.label = tour.label;
+    if(tour.date) payload.date = tour.date;
+    setDoc(doc(db, 'tournees', tourId), payload).then(function(){
+      btn.disabled = false; btn.textContent = 'Ajouter';
+      msgEl.className = 'form-msg ok'; msgEl.style.display='block';
+      msgEl.textContent = 'Ajouté à « '+(tour.label || tour.commercial)+' ».';
+    }).catch(function(){
+      btn.disabled = false; btn.textContent = 'Ajouter';
+      msgEl.className = 'form-msg err'; msgEl.style.display='block';
+      msgEl.textContent = 'Échec — vérifie ta connexion et réessaie.';
+    });
+  };
   function saveTour(){
     var commercial = document.getElementById('tb-commercial').value.trim();
     var label = document.getElementById('tb-label').value.trim();
