@@ -448,7 +448,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v45</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v46</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -460,7 +460,7 @@
   </header>
 
   <div class="filterbar">
-    <input type="search" id="search-input" placeholder="Enseigne, ville, référence…" autocomplete="off">
+    <input type="search" id="search-input" placeholder="Enseigne, ville, contact, commentaire…" autocomplete="off">
     <button class="chip active" data-status="all">Tous <span class="n" id="count-all"></span></button>
     <button class="chip" data-status="never">Pas encore visité <span class="n" id="count-never"></span></button>
     <button class="chip" data-status="due">À relancer <span class="n" id="count-due"></span></button>
@@ -1508,7 +1508,11 @@ const db = getFirestore(fbApp);
     return CLIENTS.filter(function(c){
       if(state.status !== 'all' && clientStatus(c.r) !== state.status) return false;
       if(q){
-        var hay = normSearch(c.n + ' ' + c.c + ' ' + c.r + ' ' + (c.k||''));
+        // Inclut aussi les commentaires de visite dans la recherche (ex.
+        // "Demander Mr Paquet" tapé dans un compte rendu doit permettre de
+        // retrouver le magasin en cherchant "Paquet").
+        var visitNotes = (visitsByRef[c.r] || []).map(function(v){ return v.notes || ''; }).join(' ');
+        var hay = normSearch(c.n + ' ' + c.c + ' ' + c.r + ' ' + (c.k||'') + ' ' + visitNotes);
         if(hay.indexOf(q) === -1) return false;
       }
       return true;
