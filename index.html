@@ -483,7 +483,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v50</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v51</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -1002,11 +1002,14 @@ const db = getFirestore(fbApp);
         var ref = docRef.id;
         var visitPayload = { ref:ref, clientName:name, commercial:commercial, date:date, notes:notes, createdAt: Date.now() };
         return addDoc(collection(db,'visites'), visitPayload).then(function(){
-          // mise à jour locale immédiate, sans attendre l'aller-retour Firestore
+          // Mise à jour locale immédiate du prospect (pour qu'il apparaisse
+          // tout de suite sur la carte/liste). La visite elle-même n'est PAS
+          // ajoutée à la main ici : l'écouteur Firestore sur "visites" la
+          // reçoit déjà en optimiste, et l'ajouter en double provoquait deux
+          // lignes identiques dans l'historique.
           prospects[ref] = prospectData;
           rebuildClients();
           buildClientCityLabels();
-          lastDbDocs.push(Object.assign({id:'local'}, visitPayload));
           refreshVisitsAndRender();
           return ref;
         });
