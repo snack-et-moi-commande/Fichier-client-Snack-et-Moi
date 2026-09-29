@@ -2578,6 +2578,7 @@ const db = getFirestore(fbApp);
             }).join('')+
           '</div>'+
           '<div class="tour-actions">'+
+            '<button type="button" class="btn" onclick="editTour(\''+t.id+'\')">Modifier</button>'+
             '<button type="button" class="btn primary" onclick="viewTourOnMap(\''+t.id+'\')">Voir sur la carte</button>'+
           '</div>'+
         '</div>';
