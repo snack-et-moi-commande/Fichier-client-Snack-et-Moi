@@ -483,7 +483,7 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v47</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v48</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
@@ -2646,7 +2646,7 @@ const db = getFirestore(fbApp);
   function wireTourBuilderSearch(){
     var input = document.getElementById('tb-search');
     var results = document.getElementById('tb-results');
-    input.addEventListener('input', debounce(function(){
+    function renderTbResults(){
       var matches = searchClientsForTour(input.value);
       if(!matches.length){ results.innerHTML = ''; return; }
       results.innerHTML = matches.map(function(c){
@@ -2659,12 +2659,15 @@ const db = getFirestore(fbApp);
       results.querySelectorAll('.sd-row').forEach(function(b){
         b.addEventListener('click', function(){
           tourBuilder.refs.push(b.getAttribute('data-ref'));
-          input.value = '';
-          results.innerHTML = '';
+          // On garde le texte tapé (ex. le nom de la ville) et on rafraîchit
+          // la liste, pour pouvoir ajouter plusieurs clients de la même
+          // ville sans avoir à retaper la recherche à chaque fois.
+          renderTbResults();
           renderTourBuilderList();
         });
       });
-    }, 150));
+    }
+    input.addEventListener('input', debounce(renderTbResults, 150));
   }
   function renderTourBuilderList(){
     var el = document.getElementById('tb-list');
