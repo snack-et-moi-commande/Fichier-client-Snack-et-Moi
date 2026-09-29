@@ -279,6 +279,41 @@
 
   /* ---------- dashboard ---------- */
   .dash-scroll{flex:1; overflow-y:auto; padding:14px 16px 28px; display:flex; flex-direction:column; gap:18px;}
+
+  /* ---------- tournées ---------- */
+  .tours-scroll{flex:1; overflow-y:auto; padding:14px 16px 28px; display:flex; flex-direction:column; gap:14px;}
+  .tour-banner{
+    background:var(--primary-soft); color:var(--primary); font-size:12.5px; font-weight:600;
+    padding:9px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .tour-banner button{background:none; border:none; color:inherit; font:inherit; font-weight:700; cursor:pointer; text-decoration:underline; padding:0;}
+  .tour-card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:13px; box-shadow:var(--shadow);}
+  .tour-head{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .tour-head .who{font-weight:700; font-size:13.5px;}
+  .tour-head .meta{font-size:11.5px; color:var(--ink-faint); margin-top:2px;}
+  .tour-del{background:var(--danger-soft); color:var(--danger); border:none; border-radius:50%; width:22px; height:22px; font-size:11px; cursor:pointer; flex:none; display:inline-flex; align-items:center; justify-content:center; padding:0;}
+  .tour-stops{margin-top:10px; display:flex; flex-direction:column; gap:2px;}
+  .tour-stop{
+    display:flex; align-items:center; gap:9px; padding:7px 4px; background:none; border:none; width:100%;
+    text-align:left; cursor:pointer; border-radius:8px; font:inherit; color:inherit;
+  }
+  .tour-stop:hover, .tour-stop:active{background:var(--bg);}
+  .tour-stop-num{
+    width:20px; height:20px; border-radius:50%; background:var(--primary); color:var(--primary-ink);
+    font-size:10.5px; font-weight:700; display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .tour-stop-body{min-width:0; flex:1; display:flex; flex-direction:column;}
+  .tour-stop-name{font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .tour-stop-sub{font-size:11px; color:var(--ink-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .tour-actions{margin-top:11px; display:flex; gap:8px;}
+  .tour-actions .btn{flex:1; justify-content:center;}
+  .tb-results{display:flex; flex-direction:column; gap:2px; margin-top:4px; max-height:220px; overflow-y:auto;}
+  .tb-results .sd-row{width:100%; display:flex; align-items:center; gap:9px; text-align:left; background:var(--surface-2); border:none; border-radius:8px; padding:9px 8px; cursor:pointer; margin-top:4px;}
+  .tb-item{display:flex; align-items:center; gap:8px; padding:7px 8px; background:var(--surface-2); border-radius:9px; margin-top:6px;}
+  .tb-item .num{width:20px; text-align:center; font-size:11px; font-weight:700; color:var(--ink-faint); flex:none;}
+  .tb-item .name{min-width:0; flex:1; font-size:12.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .tb-item button{background:none; border:none; color:var(--ink-faint); cursor:pointer; font-size:14px; padding:2px 5px; flex:none;}
+  .tb-item button:disabled{opacity:.3; cursor:default;}
   .stat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
   @media (min-width:520px){ .stat-grid{grid-template-columns:repeat(4,1fr);} }
   .stat-tile{
@@ -448,13 +483,14 @@
     <div class="topbar-row">
       <div class="brand">
         <span class="name">Client&nbsp;Snack&nbsp;&amp;&nbsp;Moi</span>
-        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v46</span></span>
+        <span class="sub">Prospection Snack &amp; Moi · <span id="client-count">264</span> points de vente · <span style="opacity:.55;">v47</span></span>
       </div>
       <select class="me-chip" id="me-chip" title="Merchandiser / Commercial"></select>
     </div>
     <nav class="tabs">
       <button data-view="map" class="active">Carte</button>
       <button data-view="list">Liste</button>
+      <button data-view="tours">Tournées</button>
       <button data-view="dashboard">Tableau de bord</button>
     </nav>
   </header>
@@ -469,6 +505,7 @@
   </div>
 
   <div id="sync-banner" class="sync-banner" hidden></div>
+  <div id="tour-banner" class="tour-banner" hidden></div>
   <button type="button" id="fab-new-prospect" class="fab" title="Ajouter un prospect" onclick="openNewProspectSheet()">+</button>
 
   <main>
@@ -500,6 +537,10 @@
 
     <section class="view" id="view-dashboard">
       <div class="dash-scroll" id="dash-scroll"></div>
+    </section>
+
+    <section class="view" id="view-tours">
+      <div class="tours-scroll" id="tours-scroll"></div>
     </section>
   </main>
 </div>
@@ -602,6 +643,7 @@ const db = getFirestore(fbApp);
   // "prospects") et fusionnés ici avec les clients pour apparaître sur
   // la carte, la liste et l'export comme n'importe quel point de vente.
   var prospects = {}; // ref -> {n,a,p,c,k,t,e,lat,lng,createdAt}
+  var TOURS = []; // tournées : {id, commercial, label, date, refs:[ordered refs], createdAt}
 
   function rebuildClients(){
     var list = [];
@@ -676,6 +718,26 @@ const db = getFirestore(fbApp);
         rebuildClients();
         buildClientCityLabels();
         refreshVisitsAndRender();
+      }, function(err){});
+    } catch(e){}
+  }
+
+  /* ============================= TOURNÉES ============================= */
+  // Plans de tournée ponctuels : une liste ordonnée de clients/prospects
+  // assignée à un commercial, préparée par Laurent depuis l'appli. Stockés
+  // dans la collection Firestore "tournees".
+  function initTours(){
+    try{
+      onSnapshot(query(collection(db, 'tournees'), orderBy('createdAt', 'desc')), function(snap){
+        TOURS = snap.docs.map(function(d){
+          var data = d.data() || {};
+          return { id: d.id, commercial: data.commercial || '', label: data.label || '', date: data.date || '', refs: data.refs || [], createdAt: data.createdAt || 0 };
+        });
+        if(state.view === 'tours') renderTours();
+        if(state.activeTourId){
+          renderTourBanner();
+          if(state.view === 'map') renderMap();
+        }
       }, function(err){});
     } catch(e){}
   }
@@ -1043,7 +1105,9 @@ const db = getFirestore(fbApp);
     extent: 'region',
     selectedRef: null,
     commercial: localStorage.getItem('snm_commercial_name') || '',
-    dashDate: ''
+    dashDate: '',
+    tourFilter: 'all',   // 'all' ou un nom de COMMERCIALS, pour filtrer la liste des tournées
+    activeTourId: null   // id de la tournée actuellement affichée sur la carte, ou null
   };
 
   var visitsByRef = {};   // ref -> array of visit objects, desc by date
@@ -1875,6 +1939,32 @@ const db = getFirestore(fbApp);
       );
     });
 
+    // Tournée active : trajet numéroté par-dessus les points normaux, pour
+    // qu'il reste bien visible même au milieu d'autres clients.
+    if(state.activeTourId){
+      var activeTour = TOURS.filter(function(t){ return t.id === state.activeTourId; })[0];
+      if(activeTour){
+        var tourPts = activeTour.refs.map(function(ref){
+          var c = byRef[ref];
+          return c ? {ref:ref, p:project(c.lat, c.lng, bounds)} : null;
+        }).filter(Boolean);
+        if(tourPts.length > 1){
+          parts.push('<polyline points="'+tourPts.map(function(t){ return t.p.x.toFixed(1)+','+t.p.y.toFixed(1); }).join(' ')+'" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-dasharray="1 5" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>');
+        }
+        tourPts.forEach(function(t, i){
+          parts.push(
+            '<g class="tour-mark" transform="translate('+t.p.x.toFixed(1)+','+t.p.y.toFixed(1)+')">'+
+            '<g class="dot-scale-wrap">'+
+            '<circle cx="0" cy="0" r="8" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.6"></circle>'+
+            '<text x="0" y="3" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">'+(i+1)+'</text>'+
+            '</g></g>'
+          );
+        });
+      } else {
+        state.activeTourId = null;
+      }
+    }
+
     svg.innerHTML = '<g id="map-g">' + parts.join('') + '</g>';
     applyTransform();
     svg.querySelectorAll('.map-dot').forEach(function(el){
@@ -2053,6 +2143,39 @@ const db = getFirestore(fbApp);
   function screenPosOf(c, bounds){
     var p = project(c.lat, c.lng, bounds);
     return { x: mapView.scale*p.x + mapView.tx, y: mapView.scale*p.y + mapView.ty, world:p };
+  }
+
+  /* ============================= TOURNÉES : ordre optimisé ============================= */
+  // Siège Snack & Moi (Saint-Pée-sur-Nivelle) : point de départ par défaut
+  // pour construire un ordre de tournée raisonnable.
+  var COMPANY_COORDS = {lat:43.4147, lng:-1.5258};
+  function haversineKm(a, b){
+    var R = 6371;
+    var dLat = (b.lat-a.lat)*Math.PI/180, dLng = (b.lng-a.lng)*Math.PI/180;
+    var lat1 = a.lat*Math.PI/180, lat2 = b.lat*Math.PI/180;
+    var sa = Math.sin(dLat/2), sb = Math.sin(dLng/2);
+    var h = sa*sa + Math.cos(lat1)*Math.cos(lat2)*sb*sb;
+    return 2*R*Math.asin(Math.sqrt(Math.min(1, h)));
+  }
+  // Heuristique "plus proche voisin" : simple et largement suffisante pour
+  // une tournée d'une poignée à quelques dizaines d'arrêts — pas un vrai
+  // optimum (voyageur de commerce), mais un ordre raisonnable en un clic,
+  // que Laurent peut ensuite ajuster à la main dans le constructeur.
+  function optimizeTourOrder(refs){
+    var pool = refs.map(function(r){ return byRef[r]; }).filter(Boolean);
+    var ordered = [];
+    var current = COMPANY_COORDS;
+    while(pool.length){
+      var bestIdx = 0, bestDist = Infinity;
+      pool.forEach(function(c, i){
+        var d = haversineKm(current, c);
+        if(d < bestDist){ bestDist = d; bestIdx = i; }
+      });
+      var next = pool.splice(bestIdx, 1)[0];
+      ordered.push(next.r);
+      current = next;
+    }
+    return ordered;
   }
   function handleDotTap(ref){
     try{
@@ -2388,6 +2511,224 @@ const db = getFirestore(fbApp);
     });
   }
 
+  /* ============================= TOURNÉES : vue et constructeur ============================= */
+  function renderTourBanner(){
+    var el = document.getElementById('tour-banner');
+    if(!state.activeTourId){ el.hidden = true; return; }
+    var tour = TOURS.filter(function(t){ return t.id === state.activeTourId; })[0];
+    if(!tour){ state.activeTourId = null; el.hidden = true; return; }
+    el.hidden = false;
+    el.innerHTML = 'Tournée '+esc(tour.label || tour.commercial)+' · '+tour.refs.length+' arrêt'+(tour.refs.length>1?'s':'')+
+      ' <button type="button" id="tour-banner-close">Fermer</button>';
+    document.getElementById('tour-banner-close').addEventListener('click', function(){ window.closeActiveTour(); });
+  }
+  window.viewTourOnMap = function(id){
+    state.activeTourId = id;
+    switchView('map');
+    renderTourBanner();
+  };
+  window.closeActiveTour = function(){
+    state.activeTourId = null;
+    renderTourBanner();
+    if(state.view === 'map') renderMap();
+  };
+  window.deleteTour = function(id){
+    if(!confirm('Supprimer cette tournée ? Cette action est définitive.')) return;
+    deleteDoc(doc(db, 'tournees', id)).then(function(){
+      if(state.activeTourId === id) window.closeActiveTour();
+    }).catch(function(){
+      alert('Échec de la suppression — vérifie ta connexion et réessaie.');
+    });
+  };
+  function renderTours(){
+    var el = document.getElementById('tours-scroll');
+    var html = '<div class="section-head">'+
+      '<h2 class="section-title">Tournées</h2>'+
+      '<button type="button" class="btn primary" id="tour-new-btn">+ Nouvelle tournée</button>'+
+    '</div>';
+    html += '<div style="display:flex; gap:8px; flex-wrap:wrap;">'+
+      '<button type="button" class="chip'+(state.tourFilter==='all'?' active':'')+'" data-tour-filter="all">Toutes</button>'+
+      COMMERCIALS.map(function(nm){ return '<button type="button" class="chip'+(state.tourFilter===nm?' active':'')+'" data-tour-filter="'+esc(nm)+'">'+esc(nm)+'</button>'; }).join('')+
+    '</div>';
+    var list = TOURS.filter(function(t){ return state.tourFilter==='all' || t.commercial===state.tourFilter; });
+    if(!list.length){
+      html += '<div class="empty-hint">Aucune tournée pour le moment. Créez-en une pour un commercial avec le bouton ci-dessus.</div>';
+    } else {
+      list.forEach(function(t){
+        html += '<div class="tour-card">'+
+          '<div class="tour-head">'+
+            '<div><div class="who">'+esc(t.label || ('Tournée · '+t.commercial))+'</div>'+
+            '<div class="meta">'+esc(t.commercial)+(t.date?' · '+fmtDate(t.date):'')+' · '+t.refs.length+' arrêt'+(t.refs.length>1?'s':'')+'</div></div>'+
+            '<button type="button" class="tour-del" title="Supprimer cette tournée" onclick="deleteTour(\''+t.id+'\')">✕</button>'+
+          '</div>'+
+          '<div class="tour-stops">'+
+            t.refs.map(function(ref, i){
+              var c = byRef[ref];
+              if(!c) return '';
+              var status = clientStatus(ref);
+              var lv = lastVisit(ref);
+              return '<button type="button" class="tour-stop" data-ref="'+ref+'">'+
+                '<span class="tour-stop-num">'+(i+1)+'</span>'+
+                '<span class="status-dot" style="background:var('+(c.isProspect?'--prospect':statusColorVar(status))+')"></span>'+
+                '<span class="tour-stop-body">'+
+                  '<span class="tour-stop-name">'+esc(c.n)+'</span>'+
+                  '<span class="tour-stop-sub">'+esc(c.c)+(lv?' · Dernière visite '+fmtRelative(lv.date):'')+'</span>'+
+                '</span>'+
+              '</button>';
+            }).join('')+
+          '</div>'+
+          '<div class="tour-actions">'+
+            '<button type="button" class="btn primary" onclick="viewTourOnMap(\''+t.id+'\')">Voir sur la carte</button>'+
+          '</div>'+
+        '</div>';
+      });
+    }
+    el.innerHTML = html;
+    document.getElementById('tour-new-btn').addEventListener('click', function(){ window.openNewTourSheet(); });
+    document.querySelectorAll('#tours-scroll [data-tour-filter]').forEach(function(b){
+      b.addEventListener('click', function(){ state.tourFilter = b.getAttribute('data-tour-filter'); renderTours(); });
+    });
+    document.querySelectorAll('#tours-scroll .tour-stop').forEach(function(b){
+      b.addEventListener('click', function(){ openSheet(b.getAttribute('data-ref')); });
+    });
+  }
+
+  var tourBuilder = null; // {refs:[...], commercial, label, date} pendant la construction d'une tournée
+  window.openNewTourSheet = function(){
+    state.selectedRef = null;
+    tourBuilder = { refs: [], commercial: state.commercial || '', label: '', date: todayISO() };
+    var html = '<div class="sheet-head">'+
+      '<span class="sheet-title">Nouvelle tournée</span>'+
+      '<button class="sheet-close" id="sheet-close" type="button" aria-label="Fermer">✕</button>'+
+    '</div>'+
+    '<div class="empty-hint" style="padding-top:2px;">Choisissez les clients/prospects à visiter, dans l\'ordre voulu, puis assignez la tournée à un commercial.</div>'+
+    '<div class="form" style="margin-top:10px;">'+
+      '<label for="tb-commercial">Commercial</label>'+
+      '<select id="tb-commercial">'+
+        '<option value="">Choisir…</option>'+
+        COMMERCIALS.map(function(nm){ return '<option value="'+esc(nm)+'"'+(nm===tourBuilder.commercial?' selected':'')+'>'+esc(nm)+'</option>'; }).join('')+
+      '</select>'+
+      '<div class="form-row">'+
+        '<div><label for="tb-label">Nom (optionnel)</label><input type="text" id="tb-label" placeholder="ex. Secteur côte"></div>'+
+        '<div><label for="tb-date">Date (optionnel)</label><input type="date" id="tb-date" value="'+todayISO()+'"></div>'+
+      '</div>'+
+      '<label for="tb-search">Ajouter un point (client ou prospect)</label>'+
+      '<input type="text" id="tb-search" placeholder="Nom, ville…" autocomplete="off">'+
+      '<div class="tb-results" id="tb-results"></div>'+
+      '<label style="margin-top:16px;">Arrêts de la tournée (<span id="tb-count">0</span>)</label>'+
+      '<button type="button" class="btn" id="tb-optimize" style="margin-top:6px;">Optimiser l\'ordre automatiquement</button>'+
+      '<div id="tb-list"></div>'+
+      '<button type="button" class="btn primary block" id="tb-save" style="margin-top:14px;">Enregistrer la tournée</button>'+
+      '<div id="tb-msg"></div>'+
+    '</div>';
+    document.getElementById('sheet-scroll').innerHTML = html;
+    document.getElementById('scrim').classList.add('open');
+    document.getElementById('sheet').classList.add('open');
+    document.getElementById('sheet-close').addEventListener('click', closeSheet);
+    document.getElementById('tb-optimize').addEventListener('click', function(){
+      tourBuilder.refs = optimizeTourOrder(tourBuilder.refs);
+      renderTourBuilderList();
+    });
+    document.getElementById('tb-save').addEventListener('click', saveTour);
+    wireTourBuilderSearch();
+    renderTourBuilderList();
+  };
+
+  function searchClientsForTour(q){
+    q = normSearch(q);
+    if(!q) return [];
+    return CLIENTS.filter(function(c){
+      if(tourBuilder.refs.indexOf(c.r) !== -1) return false;
+      var hay = normSearch(c.n + ' ' + c.c + ' ' + c.r);
+      return hay.indexOf(q) !== -1;
+    }).slice(0, 8);
+  }
+  function wireTourBuilderSearch(){
+    var input = document.getElementById('tb-search');
+    var results = document.getElementById('tb-results');
+    input.addEventListener('input', debounce(function(){
+      var matches = searchClientsForTour(input.value);
+      if(!matches.length){ results.innerHTML = ''; return; }
+      results.innerHTML = matches.map(function(c){
+        return '<button type="button" class="sd-row" data-ref="'+c.r+'">'+
+          '<span class="status-dot" style="background:var('+(c.isProspect?'--prospect':statusColorVar(clientStatus(c.r)))+')"></span>'+
+          '<span class="sd-body"><span class="sd-title">'+esc(c.n)+(c.isProspect?'<span class="prospect-badge">Prospect</span>':'')+'</span>'+
+          '<span class="sd-sub">'+esc(c.c)+'</span></span>'+
+        '</button>';
+      }).join('');
+      results.querySelectorAll('.sd-row').forEach(function(b){
+        b.addEventListener('click', function(){
+          tourBuilder.refs.push(b.getAttribute('data-ref'));
+          input.value = '';
+          results.innerHTML = '';
+          renderTourBuilderList();
+        });
+      });
+    }, 150));
+  }
+  function renderTourBuilderList(){
+    var el = document.getElementById('tb-list');
+    document.getElementById('tb-count').textContent = tourBuilder.refs.length;
+    if(!tourBuilder.refs.length){
+      el.innerHTML = '<div class="empty-hint">Aucun arrêt ajouté pour l\'instant.</div>';
+      return;
+    }
+    el.innerHTML = tourBuilder.refs.map(function(ref, i){
+      var c = byRef[ref];
+      var name = c ? c.n : ref;
+      return '<div class="tb-item">'+
+        '<span class="num">'+(i+1)+'</span>'+
+        '<span class="name">'+esc(name)+'</span>'+
+        '<button type="button" data-act="up" data-i="'+i+'" title="Monter"'+(i===0?' disabled':'')+'>▲</button>'+
+        '<button type="button" data-act="down" data-i="'+i+'" title="Descendre"'+(i===tourBuilder.refs.length-1?' disabled':'')+'>▼</button>'+
+        '<button type="button" data-act="remove" data-i="'+i+'" title="Retirer">✕</button>'+
+      '</div>';
+    }).join('');
+    el.querySelectorAll('button[data-act]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var i = parseInt(b.getAttribute('data-i'), 10);
+        var act = b.getAttribute('data-act');
+        if(act === 'remove'){
+          tourBuilder.refs.splice(i, 1);
+        } else if(act === 'up' && i > 0){
+          var tmp = tourBuilder.refs[i-1]; tourBuilder.refs[i-1] = tourBuilder.refs[i]; tourBuilder.refs[i] = tmp;
+        } else if(act === 'down' && i < tourBuilder.refs.length-1){
+          var tmp2 = tourBuilder.refs[i+1]; tourBuilder.refs[i+1] = tourBuilder.refs[i]; tourBuilder.refs[i] = tmp2;
+        }
+        renderTourBuilderList();
+      });
+    });
+  }
+  function saveTour(){
+    var commercial = document.getElementById('tb-commercial').value.trim();
+    var label = document.getElementById('tb-label').value.trim();
+    var date = document.getElementById('tb-date').value || '';
+    var msgEl = document.getElementById('tb-msg');
+    var btn = document.getElementById('tb-save');
+    if(!commercial){
+      msgEl.className = 'form-msg err'; msgEl.style.display='block';
+      msgEl.textContent = 'Choisis le commercial concerné.';
+      return;
+    }
+    if(!tourBuilder.refs.length){
+      msgEl.className = 'form-msg err'; msgEl.style.display='block';
+      msgEl.textContent = 'Ajoute au moins un arrêt à la tournée.';
+      return;
+    }
+    btn.disabled = true; btn.textContent = 'Enregistrement…';
+    var payload = { commercial: commercial, refs: tourBuilder.refs, createdAt: Date.now() };
+    if(label) payload.label = label;
+    if(date) payload.date = date;
+    addDoc(collection(db, 'tournees'), payload).then(function(){
+      closeSheet();
+      switchView('tours');
+    }).catch(function(){
+      btn.disabled = false; btn.textContent = 'Enregistrer la tournée';
+      msgEl.className = 'form-msg err'; msgEl.style.display='block';
+      msgEl.textContent = 'Échec de l\'enregistrement — vérifie ta connexion et réessaie.';
+    });
+  }
+
   /* ============================= VIEW SWITCHING ============================= */
   function switchView(v){
     state.view = v;
@@ -2403,6 +2744,7 @@ const db = getFirestore(fbApp);
     if(state.view==='map') renderMap();
     else if(state.view==='list') renderList();
     else if(state.view==='dashboard') renderDashboard();
+    else if(state.view==='tours') renderTours();
   }
 
   function renderMeChip(){
@@ -2479,6 +2821,7 @@ const db = getFirestore(fbApp);
   initCapabilities();
   initClientOverrides();
   initProspects();
+  initTours();
   initMapGestures();
 })();
 </script>
